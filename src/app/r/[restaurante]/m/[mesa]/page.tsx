@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { categories, products, restaurants, tables } from "@/db/schema";
 import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import type { CSSProperties } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function PublicMenuPage({ params }: Props) {
   const uncategorized = productRows.filter((product) => !product.categoryId);
 
   return (
-    <main className="public-menu-shell" style={{ "--restaurant-accent": restaurant.primaryColor || "#c75a3a" } as React.CSSProperties}>
+    <main className="public-menu-shell" style={{ "--restaurant-accent": restaurant.primaryColor || "#c75a3a" } as CSSProperties}>
       <header className="public-menu-header">
         <div>
           <span className="public-menu-brand">Calori<span>.</span></span>
