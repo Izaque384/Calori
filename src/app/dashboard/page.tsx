@@ -34,7 +34,7 @@ export default async function DashboardPage() {
         <div className="restaurant-pill">{restaurant.name}</div>
         <nav>
           <a className="active" href="/dashboard">Visão geral</a>
-          <span>Pedidos</span><span>Cardápio</span><span>Mesas</span><span>Configurações</span>
+          <span>Pedidos</span><a href="/dashboard/cardapio">Cardápio</a><span>Mesas</span><span>Configurações</span>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
