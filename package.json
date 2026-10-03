@@ -17,7 +17,8 @@
     "drizzle-orm": "latest",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "qrcode": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -25,6 +26,7 @@
     "@types/react-dom": "latest",
     "dotenv": "latest",
     "drizzle-kit": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "@types/qrcode": "latest"
   }
 }
