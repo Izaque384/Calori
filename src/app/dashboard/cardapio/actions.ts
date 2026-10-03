@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 function moneyToDatabase(value: FormDataEntryValue | null) {
@@ -51,7 +51,7 @@ export async function createCategory(formData: FormData) {
     .select({ sortOrder: categories.sortOrder })
     .from(categories)
     .where(eq(categories.restaurantId, restaurant.id))
-    .orderBy(categories.sortOrder)
+    .orderBy(desc(categories.sortOrder))
     .limit(1);
 
   await db.insert(categories).values({
