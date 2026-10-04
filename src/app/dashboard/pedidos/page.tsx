@@ -84,6 +84,7 @@ export default async function OrdersPage() {
           <a className="active" href="/dashboard/pedidos">Pedidos</a>
           <a href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
+          <a href="/dashboard/atendimento">Atendimento</a>
           <span>Configurações</span>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
