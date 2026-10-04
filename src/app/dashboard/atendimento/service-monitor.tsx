@@ -58,7 +58,7 @@ function playChimeOnce(type: RequestItem["type"]) {
 
 function playTone(type: RequestItem["type"]) {
   const chimeDurationMs = 1500;
-  const intervalBetweenChimesMs = 1000;
+  const intervalBetweenChimesMs = 500;
   const stepMs = chimeDurationMs + intervalBetweenChimesMs;
 
   playChimeOnce(type);
