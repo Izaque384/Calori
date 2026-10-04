@@ -75,6 +75,9 @@ export default function PublicMenuClient({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState<{ number: number; total: number; table: string } | null>(null);
+  const [serviceOpen, setServiceOpen] = useState(false);
+  const [serviceSending, setServiceSending] = useState(false);
+  const [serviceMessage, setServiceMessage] = useState("");
 
   const activeGroups = activeProduct
     ? optionGroups.filter((group) => group.productId === activeProduct.id)
@@ -162,6 +165,34 @@ export default function PublicMenuClient({
         )
         .filter((item) => item.quantity > 0),
     );
+  }
+
+  async function sendServiceRequest(type: "call_waiter" | "request_bill") {
+    if (serviceSending) return;
+
+    setServiceSending(true);
+    setServiceMessage("");
+
+    try {
+      const response = await fetch("/api/public/service", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          restaurantSlug,
+          tableCode,
+          type,
+        }),
+      });
+
+      const data = await response.json();
+      setServiceMessage(
+        response.ok ? data.message : data.error || "Não conseguimos enviar a solicitação.",
+      );
+    } catch {
+      setServiceMessage("Não conseguimos enviar a solicitação. Tente novamente.");
+    } finally {
+      setServiceSending(false);
+    }
   }
 
   async function submitOrder() {
@@ -360,6 +391,34 @@ export default function PublicMenuClient({
             <button className="primary-button cart-submit" type="button" disabled={sending || !cart.length} onClick={submitOrder}>
               {sending ? "Enviando..." : "Enviar pedido"}
             </button>
+          </section>
+        </div>
+      )}
+
+      <button className="floating-service" type="button" onClick={() => { setServiceOpen(true); setServiceMessage(""); }}>
+        Atendimento
+      </button>
+
+      {serviceOpen && (
+        <div className="menu-modal-backdrop" onClick={() => setServiceOpen(false)}>
+          <section className="menu-modal service-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setServiceOpen(false)}>×</button>
+            <span className="section-kicker">Atendimento</span>
+            <h2>Como podemos ajudar?</h2>
+            <p className="muted">Envie uma solicitação para a equipe do restaurante.</p>
+
+            <div className="service-choice-grid">
+              <button type="button" disabled={serviceSending} onClick={() => sendServiceRequest("call_waiter")}>
+                <strong>Chamar garçom</strong>
+                <span>Peça atendimento na sua mesa.</span>
+              </button>
+              <button type="button" disabled={serviceSending} onClick={() => sendServiceRequest("request_bill")}>
+                <strong>Pedir a conta</strong>
+                <span>Avise a equipe que deseja encerrar.</span>
+              </button>
+            </div>
+
+            {serviceMessage && <p className="service-feedback">{serviceMessage}</p>}
           </section>
         </div>
       )}
