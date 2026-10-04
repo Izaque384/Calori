@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { orders, restaurantMembers, restaurants, tables } from "@/db/schema";
+import { orders, restaurantMembers, restaurants, serviceRequests, tables } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const [todayRows, inProgressRows, activeTableRows] = await Promise.all([
+  const [todayRows, inProgressRows, activeTableRows, pendingServiceRows] = await Promise.all([
     db
       .select({
         count: sql<number>`count(*)::int`,
@@ -63,11 +63,16 @@ export default async function DashboardPage() {
       .select({ count: sql<number>`count(*)::int` })
       .from(tables)
       .where(and(eq(tables.restaurantId, restaurant.id), eq(tables.active, true))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(serviceRequests)
+      .where(and(eq(serviceRequests.restaurantId, restaurant.id), eq(serviceRequests.status, "pending"))),
   ]);
 
   const today = todayRows[0] ?? { count: 0, total: "0" };
   const inProgress = inProgressRows[0]?.count ?? 0;
   const activeTables = activeTableRows[0]?.count ?? 0;
+  const pendingService = pendingServiceRows[0]?.count ?? 0;
 
   return (
     <main className="dashboard-shell">
@@ -79,6 +84,7 @@ export default async function DashboardPage() {
           <a href="/dashboard/pedidos">Pedidos</a>
           <a href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
+          <a href="/dashboard/atendimento">Atendimento</a>
           <span>Configurações</span>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
@@ -93,6 +99,13 @@ export default async function DashboardPage() {
           <article><span>Mesas ativas</span><strong>{activeTables}</strong></article>
           <article><span>Total em pedidos</span><strong>{formatMoney(today.total)}</strong></article>
         </div>
+        <a href="/dashboard/atendimento" className="service-summary-card">
+          <div>
+            <span className="section-kicker">Atendimento agora</span>
+            <strong>{pendingService} {pendingService === 1 ? "solicitação pendente" : "solicitações pendentes"}</strong>
+          </div>
+          <span>Ver atendimento →</span>
+        </a>
       </section>
     </main>
   );
