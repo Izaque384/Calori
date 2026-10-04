@@ -354,3 +354,22 @@ button, input { font: inherit; }
   .settings-fields, .settings-fields.compact { grid-template-columns: 1fr; }
   .settings-card { padding: 18px; }
 }
+
+
+/* Pedidos ao vivo */
+.orders-monitor { margin-top: 24px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; color: var(--muted); font-size: 11px; }
+.monitor-live-dot { width: 8px; height: 8px; border-radius: 999px; background: #5d8b63; box-shadow: 0 0 0 4px rgba(93,139,99,.12); }
+.new-order-toast { margin-left: auto; border: 1px solid #e0c7b9; background: #fff3ea; color: var(--charcoal); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; text-align: left; cursor: pointer; animation: servicePulse 1.2s ease-out 2; }
+.new-order-toast strong { font-size: 12px; }
+.new-order-toast span { color: var(--muted); font-size: 11px; }
+.order-card-new { border-color: rgba(199,90,58,.38); box-shadow: inset 3px 0 0 var(--terracotta); }
+.order-items-detailed { display: grid; gap: 10px; margin: 14px 0; }
+.order-item-detail { display: grid; gap: 5px; padding-bottom: 10px; border-bottom: 1px dashed #eaded2; }
+.order-item-detail:last-child { border-bottom: 0; padding-bottom: 0; }
+.order-item-detail > strong { font-size: 13px; }
+.order-item-options { display: grid; gap: 3px; padding-left: 12px; }
+.order-item-options span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.order-item-note { display: block; color: #8a5137; background: #f7ede4; border-radius: 8px; padding: 6px 8px; font-size: 11px; line-height: 1.4; }
+@media (max-width: 640px) {
+  .new-order-toast { width: 100%; margin-left: 0; }
+}
