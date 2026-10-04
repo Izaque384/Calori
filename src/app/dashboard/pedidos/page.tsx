@@ -1,9 +1,10 @@
 import { db } from "@/db";
-import { orderItems, orders, tables } from "@/db/schema";
+import { orderItemOptions, orderItems, orders, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { signOut } from "../actions";
 import { advanceOrder, cancelOrder } from "./actions";
+import OrdersMonitor from "./orders-monitor";
 
 export const dynamic = "force-dynamic";
 
@@ -57,18 +58,56 @@ export default async function OrdersPage() {
 
   const itemRows = await db
     .select({
+      id: orderItems.id,
       orderId: orderItems.orderId,
       productName: orderItems.productName,
       quantity: orderItems.quantity,
+      note: orderItems.note,
     })
     .from(orderItems)
+    .innerJoin(orders, eq(orderItems.orderId, orders.id))
+    .where(eq(orders.restaurantId, restaurant.id))
     .orderBy(asc(orderItems.productName));
 
-  const itemsByOrder = new Map<string, Array<{ productName: string; quantity: number }>>();
+  const optionRows = await db
+    .select({
+      orderItemId: orderItemOptions.orderItemId,
+      name: orderItemOptions.name,
+      price: orderItemOptions.price,
+    })
+    .from(orderItemOptions)
+    .innerJoin(orderItems, eq(orderItemOptions.orderItemId, orderItems.id))
+    .innerJoin(orders, eq(orderItems.orderId, orders.id))
+    .where(eq(orders.restaurantId, restaurant.id))
+    .orderBy(asc(orderItemOptions.name));
+
+  const optionsByItem = new Map<string, Array<{ name: string; price: string }>>();
+  for (const option of optionRows) {
+    const list = optionsByItem.get(option.orderItemId) ?? [];
+    list.push({ name: option.name, price: option.price });
+    optionsByItem.set(option.orderItemId, list);
+  }
+
+  const itemsByOrder = new Map<
+    string,
+    Array<{
+      id: string;
+      productName: string;
+      quantity: number;
+      note: string | null;
+      options: Array<{ name: string; price: string }>;
+    }>
+  >();
 
   for (const item of itemRows) {
     const list = itemsByOrder.get(item.orderId) ?? [];
-    list.push({ productName: item.productName, quantity: item.quantity });
+    list.push({
+      id: item.id,
+      productName: item.productName,
+      quantity: item.quantity,
+      note: item.note,
+      options: optionsByItem.get(item.id) ?? [],
+    });
     itemsByOrder.set(item.orderId, list);
   }
 
@@ -95,10 +134,20 @@ export default async function OrdersPage() {
           <div>
             <p className="eyebrow">Pedidos</p>
             <h1>Acompanhe a operação.</h1>
-            <p className="muted">Mova cada pedido pelas etapas conforme ele avança na cozinha e no salão.</p>
+            <p className="muted">Novos pedidos aparecem automaticamente e cada item mantém adicionais e observações visíveis para a equipe.</p>
           </div>
           <div className="status-chip">{activeOrders.filter((order) => order.status !== "delivered").length} em andamento</div>
         </div>
+
+        <OrdersMonitor
+          initialOrders={orderRows.map((order) => ({
+            id: order.id,
+            number: order.number,
+            status: order.status,
+            updatedAt: order.updatedAt.toISOString(),
+            createdAt: order.createdAt.toISOString(),
+          }))}
+        />
 
         <div className="order-board">
           {columns.map((column) => {
@@ -123,7 +172,7 @@ export default async function OrdersPage() {
                       const nextLabel = nextActionLabel(order.status);
 
                       return (
-                        <article className="order-card" key={order.id}>
+                        <article className={`order-card ${order.status === "new" ? "order-card-new" : ""}`} key={order.id}>
                           <div className="order-card-top">
                             <div>
                               <span className="order-number">#{order.number}</span>
@@ -132,15 +181,28 @@ export default async function OrdersPage() {
                             <span className="order-total">{formatMoney(order.total)}</span>
                           </div>
 
-                          <div className="order-items-summary">
-                            {items.map((item, index) => (
-                              <span key={`${order.id}-${index}`}>
-                                {item.quantity}× {item.productName}
-                              </span>
+                          <div className="order-items-detailed">
+                            {items.map((item) => (
+                              <div className="order-item-detail" key={item.id}>
+                                <strong>{item.quantity}× {item.productName}</strong>
+
+                                {item.options.length > 0 && (
+                                  <div className="order-item-options">
+                                    {item.options.map((option, index) => (
+                                      <span key={`${item.id}-option-${index}`}>
+                                        + {option.name}
+                                        {Number(option.price) > 0 ? ` (${formatMoney(option.price)})` : ""}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {item.note && <span className="order-item-note">Obs.: {item.note}</span>}
+                              </div>
                             ))}
                           </div>
 
-                          {order.note && <p className="order-note">Obs.: {order.note}</p>}
+                          {order.note && <p className="order-note">Observação do pedido: {order.note}</p>}
 
                           <div className="order-card-meta">
                             <span>{statusLabel(order.status)}</span>
