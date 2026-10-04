@@ -27,6 +27,7 @@ export default async function TablesPage() {
           <span>Pedidos</span>
           <a href="/dashboard/cardapio">Cardápio</a>
           <a className="active" href="/dashboard/mesas">Mesas</a>
+          <a href="/dashboard/atendimento">Atendimento</a>
           <span>Configurações</span>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
