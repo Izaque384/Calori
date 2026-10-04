@@ -24,56 +24,78 @@ function playTone(type: RequestItem["type"]) {
   if (!AudioContextClass) return;
 
   const context = new AudioContextClass();
-  const master = context.createGain();
-  master.gain.setValueAtTime(0.0001, context.currentTime);
-  master.gain.exponentialRampToValueAtTime(0.28, context.currentTime + 0.02);
-  master.connect(context.destination);
+  const compressor = context.createDynamicsCompressor();
+  compressor.threshold.setValueAtTime(-18, context.currentTime);
+  compressor.knee.setValueAtTime(18, context.currentTime);
+  compressor.ratio.setValueAtTime(8, context.currentTime);
+  compressor.attack.setValueAtTime(0.003, context.currentTime);
+  compressor.release.setValueAtTime(0.18, context.currentTime);
+  compressor.connect(context.destination);
 
-  const pattern =
+  const master = context.createGain();
+  master.gain.setValueAtTime(0.62, context.currentTime);
+  master.connect(compressor);
+
+  const basePattern =
     type === "request_bill"
       ? [
-          { frequency: 820, start: 0, duration: 0.22 },
-          { frequency: 620, start: 0.28, duration: 0.24 },
-          { frequency: 820, start: 0.62, duration: 0.28 },
+          { frequency: 784, start: 0, duration: 0.28 },
+          { frequency: 587, start: 0.34, duration: 0.32 },
+          { frequency: 784, start: 0.75, duration: 0.38 },
         ]
       : [
-          { frequency: 880, start: 0, duration: 0.2 },
-          { frequency: 1100, start: 0.27, duration: 0.22 },
-          { frequency: 1320, start: 0.58, duration: 0.3 },
+          { frequency: 988, start: 0, duration: 0.25 },
+          { frequency: 1175, start: 0.31, duration: 0.27 },
+          { frequency: 1397, start: 0.68, duration: 0.4 },
         ];
 
+  const pattern = [
+    ...basePattern,
+    ...basePattern.map((tone) => ({ ...tone, start: tone.start + 1.35 })),
+  ];
+
   for (const tone of pattern) {
-    const oscillator = context.createOscillator();
     const envelope = context.createGain();
-
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(tone.frequency, context.currentTime + tone.start);
-
     envelope.gain.setValueAtTime(0.0001, context.currentTime + tone.start);
     envelope.gain.exponentialRampToValueAtTime(
-      0.95,
-      context.currentTime + tone.start + 0.02,
+      0.9,
+      context.currentTime + tone.start + 0.012,
     );
     envelope.gain.exponentialRampToValueAtTime(
       0.0001,
       context.currentTime + tone.start + tone.duration,
     );
-
-    oscillator.connect(envelope);
     envelope.connect(master);
-    oscillator.start(context.currentTime + tone.start);
-    oscillator.stop(context.currentTime + tone.start + tone.duration);
+
+    const primary = context.createOscillator();
+    primary.type = "square";
+    primary.frequency.setValueAtTime(tone.frequency, context.currentTime + tone.start);
+    primary.connect(envelope);
+    primary.start(context.currentTime + tone.start);
+    primary.stop(context.currentTime + tone.start + tone.duration);
+
+    const harmonic = context.createOscillator();
+    const harmonicGain = context.createGain();
+    harmonic.type = "triangle";
+    harmonic.frequency.setValueAtTime(tone.frequency * 2, context.currentTime + tone.start);
+    harmonicGain.gain.setValueAtTime(0.28, context.currentTime + tone.start);
+    harmonic.connect(harmonicGain);
+    harmonicGain.connect(envelope);
+    harmonic.start(context.currentTime + tone.start);
+    harmonic.stop(context.currentTime + tone.start + tone.duration);
   }
 
-  master.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 1.05);
-
   if ("vibrate" in navigator) {
-    navigator.vibrate(type === "request_bill" ? [160, 90, 240] : [140, 80, 140, 80, 220]);
+    navigator.vibrate(
+      type === "request_bill"
+        ? [240, 100, 300, 250, 240, 100, 300]
+        : [180, 80, 180, 80, 320, 250, 180, 80, 180, 80, 320],
+    );
   }
 
   window.setTimeout(() => {
     void context.close();
-  }, 1250);
+  }, 3200);
 }
 
 export default function ServiceMonitor({ initialRequests }: Props) {
@@ -109,6 +131,9 @@ export default function ServiceMonitor({ initialRequests }: Props) {
 
           if (soundEnabled) {
             playTone(latest.type);
+            window.setTimeout(() => {
+              if (!cancelled) playTone(latest.type);
+            }, 7000);
           }
 
           router.refresh();
