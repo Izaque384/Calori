@@ -305,3 +305,22 @@ button, input { font: inherit; }
   .floating-service { bottom: 82px; }
   .service-summary-card { align-items: flex-start; flex-direction: column; }
 }
+
+
+/* Alertas sonoros do atendimento */
+.service-monitor-bar { margin-top: 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sound-toggle { border: 1px solid #d9cbbc; background: #fffaf2; color: var(--charcoal); border-radius: 999px; padding: 10px 13px; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.sound-toggle.enabled { background: #eaf1e8; border-color: #c8d8c6; color: #456249; }
+.sound-indicator { width: 8px; height: 8px; border-radius: 999px; background: #b8aaa0; }
+.sound-toggle.enabled .sound-indicator { background: #5d8b63; box-shadow: 0 0 0 4px rgba(93,139,99,.12); }
+.monitor-status { color: var(--muted); font-size: 11px; }
+.new-service-toast { margin-left: auto; border: 1px solid #e0c7b9; background: #fff3ea; color: var(--charcoal); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; text-align: left; cursor: pointer; animation: servicePulse 1.2s ease-out 2; }
+.new-service-toast strong { font-size: 12px; }
+.new-service-toast span { font-size: 11px; color: var(--muted); }
+@keyframes servicePulse {
+  0% { box-shadow: 0 0 0 0 rgba(199,90,58,.22); }
+  100% { box-shadow: 0 0 0 12px rgba(199,90,58,0); }
+}
+@media (max-width: 640px) {
+  .new-service-toast { width: 100%; margin-left: 0; }
+}
