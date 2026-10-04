@@ -49,7 +49,7 @@ export default async function ServicePage() {
           <a href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
           <a className="active" href="/dashboard/atendimento">Atendimento</a>
-          <span>Configurações</span>
+          <a href="/dashboard/configuracoes">Configurações</a>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
