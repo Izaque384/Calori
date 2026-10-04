@@ -67,7 +67,7 @@ export default async function MenuPage() {
           <a className="active" href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
-          <span>Configurações</span>
+          <a href="/dashboard/configuracoes">Configurações</a>
         </nav>
         <form action={signOut}>
           <button className="ghost-button" type="submit">Sair</button>
