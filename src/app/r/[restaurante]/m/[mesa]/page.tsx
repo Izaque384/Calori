@@ -1,19 +1,13 @@
 import { db } from "@/db";
-import { categories, products, restaurants, tables } from "@/db/schema";
+import { categories, optionGroups, options, products, restaurants, tables } from "@/db/schema";
 import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
+import PublicMenuClient from "./menu-client";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ restaurante: string; mesa: string }> };
-
-function formatMoney(value: string) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(Number(value));
-}
 
 export default async function PublicMenuPage({ params }: Props) {
   const { restaurante, mesa } = await params;
@@ -32,7 +26,7 @@ export default async function PublicMenuPage({ params }: Props) {
   if (!restaurant) notFound();
 
   const [table] = await db
-    .select({ id: tables.id, name: tables.name })
+    .select({ id: tables.id, name: tables.name, publicCode: tables.publicCode })
     .from(tables)
     .where(
       and(
@@ -45,7 +39,7 @@ export default async function PublicMenuPage({ params }: Props) {
 
   if (!table) notFound();
 
-  const [categoryRows, productRows] = await Promise.all([
+  const [categoryRows, productRows, groupRows, optionRows] = await Promise.all([
     db
       .select()
       .from(categories)
@@ -56,12 +50,59 @@ export default async function PublicMenuPage({ params }: Props) {
       .from(products)
       .where(and(eq(products.restaurantId, restaurant.id), eq(products.available, true)))
       .orderBy(asc(products.sortOrder), asc(products.name)),
+    db
+      .select({
+        id: optionGroups.id,
+        productId: optionGroups.productId,
+        name: optionGroups.name,
+        required: optionGroups.required,
+        minSelections: optionGroups.minSelections,
+        maxSelections: optionGroups.maxSelections,
+        sortOrder: optionGroups.sortOrder,
+      })
+      .from(optionGroups)
+      .orderBy(asc(optionGroups.sortOrder)),
+    db
+      .select({
+        id: options.id,
+        groupId: options.groupId,
+        name: options.name,
+        additionalPrice: options.additionalPrice,
+        available: options.available,
+        sortOrder: options.sortOrder,
+      })
+      .from(options)
+      .where(eq(options.available, true))
+      .orderBy(asc(options.sortOrder), asc(options.name)),
   ]);
 
-  const uncategorized = productRows.filter((product) => !product.categoryId);
+  const productIds = new Set(productRows.map((product) => product.id));
+  const relevantGroups = groupRows.filter((group) => productIds.has(group.productId));
+  const groupIds = new Set(relevantGroups.map((group) => group.id));
+  const relevantOptions = optionRows.filter((option) => groupIds.has(option.groupId));
+
+  const groups = relevantGroups.map((group) => ({
+    id: group.id,
+    productId: group.productId,
+    name: group.name,
+    required: group.required,
+    minSelections: group.minSelections,
+    maxSelections: group.maxSelections,
+    options: relevantOptions
+      .filter((option) => option.groupId === group.id)
+      .map((option) => ({
+        id: option.id,
+        groupId: option.groupId,
+        name: option.name,
+        price: Number(option.additionalPrice),
+      })),
+  }));
 
   return (
-    <main className="public-menu-shell" style={{ "--restaurant-accent": restaurant.primaryColor || "#c75a3a" } as CSSProperties}>
+    <main
+      className="public-menu-shell"
+      style={{ "--restaurant-accent": restaurant.primaryColor || "#c75a3a" } as CSSProperties}
+    >
       <header className="public-menu-header">
         <div>
           <span className="public-menu-brand">Calori<span>.</span></span>
@@ -73,7 +114,7 @@ export default async function PublicMenuPage({ params }: Props) {
       <section className="public-menu-hero">
         <span>Cardápio digital</span>
         <h1>Escolha com calma.</h1>
-        <p>Veja o que está disponível agora. Em breve, você também poderá montar e enviar o pedido direto por aqui.</p>
+        <p>Monte seu pedido, personalize os itens e envie direto para o restaurante.</p>
       </section>
 
       {productRows.length === 0 ? (
@@ -82,52 +123,22 @@ export default async function PublicMenuPage({ params }: Props) {
           <span>Volte em alguns instantes.</span>
         </div>
       ) : (
-        <section className="public-menu-sections">
-          {categoryRows.map((category) => {
-            const items = productRows.filter((product) => product.categoryId === category.id);
-            if (!items.length) return null;
-
-            return (
-              <section className="public-category" key={category.id}>
-                <div className="public-category-heading">
-                  <span>{category.name}</span>
-                  <small>{items.length} {items.length === 1 ? "item" : "itens"}</small>
-                </div>
-                <div className="public-product-list">
-                  {items.map((product) => (
-                    <article className="public-product-card" key={product.id}>
-                      <div>
-                        <h2>{product.name}</h2>
-                        {product.description && <p>{product.description}</p>}
-                      </div>
-                      <strong>{formatMoney(product.price)}</strong>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-
-          {uncategorized.length > 0 && (
-            <section className="public-category">
-              <div className="public-category-heading">
-                <span>Outros</span>
-                <small>{uncategorized.length} {uncategorized.length === 1 ? "item" : "itens"}</small>
-              </div>
-              <div className="public-product-list">
-                {uncategorized.map((product) => (
-                  <article className="public-product-card" key={product.id}>
-                    <div>
-                      <h2>{product.name}</h2>
-                      {product.description && <p>{product.description}</p>}
-                    </div>
-                    <strong>{formatMoney(product.price)}</strong>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-        </section>
+        <PublicMenuClient
+          restaurantSlug={restaurant.slug}
+          tableCode={table.publicCode}
+          categories={categoryRows.map((category) => ({
+            id: category.id,
+            name: category.name,
+          }))}
+          products={productRows.map((product) => ({
+            id: product.id,
+            categoryId: product.categoryId,
+            name: product.name,
+            description: product.description,
+            price: Number(product.price),
+          }))}
+          optionGroups={groups}
+        />
       )}
     </main>
   );
