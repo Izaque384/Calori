@@ -17,33 +17,63 @@ type Props = {
 const SOUND_KEY = "calori-service-sound-enabled";
 
 function playTone(type: RequestItem["type"]) {
-  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
   if (!AudioContextClass) return;
 
   const context = new AudioContextClass();
-  const gain = context.createGain();
-  gain.gain.setValueAtTime(0.0001, context.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.42);
-  gain.connect(context.destination);
+  const master = context.createGain();
+  master.gain.setValueAtTime(0.0001, context.currentTime);
+  master.gain.exponentialRampToValueAtTime(0.28, context.currentTime + 0.02);
+  master.connect(context.destination);
 
-  const first = context.createOscillator();
-  first.type = "sine";
-  first.frequency.value = type === "request_bill" ? 740 : 880;
-  first.connect(gain);
-  first.start();
-  first.stop(context.currentTime + 0.18);
+  const pattern =
+    type === "request_bill"
+      ? [
+          { frequency: 820, start: 0, duration: 0.22 },
+          { frequency: 620, start: 0.28, duration: 0.24 },
+          { frequency: 820, start: 0.62, duration: 0.28 },
+        ]
+      : [
+          { frequency: 880, start: 0, duration: 0.2 },
+          { frequency: 1100, start: 0.27, duration: 0.22 },
+          { frequency: 1320, start: 0.58, duration: 0.3 },
+        ];
 
-  const second = context.createOscillator();
-  second.type = "sine";
-  second.frequency.value = type === "request_bill" ? 560 : 1040;
-  second.connect(gain);
-  second.start(context.currentTime + 0.2);
-  second.stop(context.currentTime + 0.4);
+  for (const tone of pattern) {
+    const oscillator = context.createOscillator();
+    const envelope = context.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(tone.frequency, context.currentTime + tone.start);
+
+    envelope.gain.setValueAtTime(0.0001, context.currentTime + tone.start);
+    envelope.gain.exponentialRampToValueAtTime(
+      0.95,
+      context.currentTime + tone.start + 0.02,
+    );
+    envelope.gain.exponentialRampToValueAtTime(
+      0.0001,
+      context.currentTime + tone.start + tone.duration,
+    );
+
+    oscillator.connect(envelope);
+    envelope.connect(master);
+    oscillator.start(context.currentTime + tone.start);
+    oscillator.stop(context.currentTime + tone.start + tone.duration);
+  }
+
+  master.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 1.05);
+
+  if ("vibrate" in navigator) {
+    navigator.vibrate(type === "request_bill" ? [160, 90, 240] : [140, 80, 140, 80, 220]);
+  }
 
   window.setTimeout(() => {
     void context.close();
-  }, 650);
+  }, 1250);
 }
 
 export default function ServiceMonitor({ initialRequests }: Props) {
