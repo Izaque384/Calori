@@ -65,7 +65,8 @@ export default async function MenuPage() {
           <a href="/dashboard">Visão geral</a>
           <span>Pedidos</span>
           <a className="active" href="/dashboard/cardapio">Cardápio</a>
-          <span>Mesas</span>
+          <a href="/dashboard/mesas">Mesas</a>
+          <a href="/dashboard/atendimento">Atendimento</a>
           <span>Configurações</span>
         </nav>
         <form action={signOut}>
