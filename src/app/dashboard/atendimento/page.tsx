@@ -4,6 +4,7 @@ import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { desc, eq } from "drizzle-orm";
 import { signOut } from "../actions";
 import { cancelServiceRequest, handleServiceRequest } from "./actions";
+import ServiceMonitor from "./service-monitor";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,15 @@ export default async function ServicePage() {
           </div>
           <div className="status-chip">{pending.length} pendentes</div>
         </div>
+
+        <ServiceMonitor
+          initialRequests={pending.map((request) => ({
+            id: request.id,
+            type: request.type,
+            tableName: request.tableName,
+            createdAt: request.createdAt.toISOString(),
+          }))}
+        />
 
         <section className="service-grid">
           {pending.length === 0 ? (
