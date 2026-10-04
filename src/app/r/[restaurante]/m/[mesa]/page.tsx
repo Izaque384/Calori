@@ -18,6 +18,9 @@ export default async function PublicMenuPage({ params }: Props) {
       name: restaurants.name,
       slug: restaurants.slug,
       primaryColor: restaurants.primaryColor,
+      logoUrl: restaurants.logoUrl,
+      phone: restaurants.phone,
+      address: restaurants.address,
     })
     .from(restaurants)
     .where(and(eq(restaurants.slug, restaurante), eq(restaurants.active, true)))
@@ -104,9 +107,20 @@ export default async function PublicMenuPage({ params }: Props) {
       style={{ "--restaurant-accent": restaurant.primaryColor || "#c75a3a" } as CSSProperties}
     >
       <header className="public-menu-header">
-        <div>
-          <span className="public-menu-brand">Calori<span>.</span></span>
-          <p>{restaurant.name}</p>
+        <div className="public-restaurant-identity">
+          {restaurant.logoUrl ? (
+            <img className="public-restaurant-logo" src={restaurant.logoUrl} alt={`Logo de ${restaurant.name}`} />
+          ) : (
+            <span className="public-menu-brand">Calori<span>.</span></span>
+          )}
+          <div>
+            <strong>{restaurant.name}</strong>
+            {(restaurant.address || restaurant.phone) && (
+              <p>
+                {[restaurant.address, restaurant.phone].filter(Boolean).join(" · ")}
+              </p>
+            )}
+          </div>
         </div>
         <div className="public-table-pill">{table.name}</div>
       </header>
