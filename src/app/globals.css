@@ -324,3 +324,33 @@ button, input { font: inherit; }
 @media (max-width: 640px) {
   .new-service-toast { width: 100%; margin-left: 0; }
 }
+
+
+/* Configurações do restaurante */
+.settings-content { max-width: 1100px; }
+.settings-form { display: grid; gap: 18px; margin-top: 32px; }
+.settings-card { background: rgba(255,250,242,.78); border: 1px solid #e4d8ca; border-radius: 24px; padding: 24px; }
+.settings-card-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 20px; }
+.settings-card-heading h2 { font-family: Georgia, serif; font-size: 26px; margin: 4px 0 0; letter-spacing: -.035em; }
+.settings-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.settings-fields.compact { grid-template-columns: minmax(220px,.65fr) minmax(300px,1.35fr); }
+.settings-fields label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.settings-fields input { width: 100%; border: 1px solid #d9cbbc; background: #fffdf9; border-radius: 13px; padding: 12px 13px; font: inherit; color: var(--charcoal); outline: none; }
+.settings-fields input:focus { border-color: var(--terracotta); box-shadow: 0 0 0 3px rgba(199,90,58,.08); }
+.settings-fields input[readonly] { background: #f2ebe4; color: var(--muted); }
+.settings-fields small { font-weight: 500; line-height: 1.45; color: var(--muted); }
+.color-field { display: flex; align-items: center; gap: 12px; border: 1px solid #d9cbbc; background: #fffdf9; border-radius: 13px; padding: 8px 10px; }
+.color-field input[type="color"] { width: 46px; height: 38px; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.color-field span { color: var(--charcoal); font-weight: 800; }
+.color-preview { width: 40px; height: 40px; border-radius: 13px; border: 1px solid rgba(31,31,31,.08); }
+.settings-actions { display: flex; justify-content: flex-end; }
+.settings-readonly { margin: 0; border-radius: 13px; background: #f1ebe5; color: var(--muted); padding: 12px 14px; font-size: 12px; }
+.public-restaurant-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.public-restaurant-identity > div { min-width: 0; }
+.public-restaurant-identity strong { display: block; font-size: 15px; }
+.public-restaurant-identity p { margin: 3px 0 0; color: var(--muted); font-size: 11px; white-space: normal; }
+.public-restaurant-logo { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; background: white; border: 1px solid #eaded2; padding: 5px; flex-shrink: 0; }
+@media (max-width: 720px) {
+  .settings-fields, .settings-fields.compact { grid-template-columns: 1fr; }
+  .settings-card { padding: 18px; }
+}
