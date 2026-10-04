@@ -57,17 +57,25 @@ function playChimeOnce(type: RequestItem["type"]) {
 }
 
 function playTone(type: RequestItem["type"]) {
+  const chimeDurationMs = 1500;
+  const intervalBetweenChimesMs = 1000;
+  const stepMs = chimeDurationMs + intervalBetweenChimesMs;
+
   playChimeOnce(type);
 
   window.setTimeout(() => {
     playChimeOnce(type);
-  }, 1900);
+  }, stepMs);
+
+  window.setTimeout(() => {
+    playChimeOnce(type);
+  }, stepMs * 2);
 
   if ("vibrate" in navigator) {
     navigator.vibrate(
       type === "request_bill"
-        ? [260, 120, 320, 240, 260]
-        : [180, 90, 180, 90, 360],
+        ? [260, 120, 320, 1000, 260, 120, 320, 1000, 260, 120, 320]
+        : [180, 90, 180, 90, 360, 1000, 180, 90, 180, 90, 360, 1000, 180, 90, 180, 90, 360],
     );
   }
 }
@@ -105,9 +113,6 @@ export default function ServiceMonitor({ initialRequests }: Props) {
 
           if (soundEnabled) {
             playTone(latest.type);
-            window.setTimeout(() => {
-              if (!cancelled) playTone(latest.type);
-            }, 7000);
           }
 
           router.refresh();
