@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type OptionItem = {
   id: string;
@@ -74,7 +74,7 @@ export default function PublicMenuClient({
   const [cartOpen, setCartOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [order, setOrder] = useState<{ number: number; total: number; table: string } | null>(null);
+  const [order, setOrder] = useState<{ id: string; number: number; total: number; table: string; status: "new" | "preparing" | "ready" | "delivered" | "cancelled" } | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
@@ -97,6 +97,68 @@ export default function PublicMenuClient({
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(`calori-active-order:${restaurantSlug}:${tableCode}`);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved) as typeof order;
+      if (parsed?.id) {
+        setOrder(parsed);
+      }
+    } catch {
+      window.localStorage.removeItem(`calori-active-order:${restaurantSlug}:${tableCode}`);
+    }
+  }, [restaurantSlug, tableCode]);
+
+  useEffect(() => {
+    if (!order?.id) return;
+
+    let cancelled = false;
+
+    async function refreshOrderStatus() {
+      try {
+        const params = new URLSearchParams({ restaurantSlug, tableCode });
+        const response = await fetch(`/api/public/orders/${order.id}/status?${params.toString()}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (cancelled) return;
+
+        const nextOrder = {
+          id: data.order.id,
+          number: data.order.number,
+          total: data.order.total,
+          table: data.order.table,
+          status: data.order.status,
+        };
+
+        setOrder(nextOrder);
+        window.localStorage.setItem(
+          `calori-active-order:${restaurantSlug}:${tableCode}`,
+          JSON.stringify(nextOrder),
+        );
+
+        if (data.order.status === "delivered" || data.order.status === "cancelled") {
+          window.clearInterval(timer);
+        }
+      } catch {
+        // O status continua visível mesmo se uma atualização falhar.
+      }
+    }
+
+    const timer = window.setInterval(refreshOrderStatus, 5000);
+    void refreshOrderStatus();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [order?.id, restaurantSlug, tableCode]);
 
   function openProduct(product: ProductItem) {
     setActiveProduct(product);
@@ -224,11 +286,19 @@ export default function PublicMenuClient({
         return;
       }
 
-      setOrder({
+      const nextOrder = {
+        id: data.order.id,
         number: data.order.number,
         total: data.order.total,
         table: data.order.table,
-      });
+        status: data.order.status,
+      };
+
+      setOrder(nextOrder);
+      window.localStorage.setItem(
+        `calori-active-order:${restaurantSlug}:${tableCode}`,
+        JSON.stringify(nextOrder),
+      );
       setCart([]);
       setCartOpen(false);
     } catch {
@@ -239,16 +309,74 @@ export default function PublicMenuClient({
   }
 
   if (order) {
+    const statusIndex = ["new", "preparing", "ready", "delivered"].indexOf(order.status);
+    const statusCopy =
+      order.status === "new"
+        ? "Seu pedido foi recebido pelo restaurante."
+        : order.status === "preparing"
+          ? "Seu pedido está sendo preparado."
+          : order.status === "ready"
+            ? "Seu pedido está pronto."
+            : order.status === "delivered"
+              ? "Pedido entregue. Bom apetite!"
+              : "Este pedido foi cancelado.";
+
     return (
-      <section className="public-order-success">
-        <span className="success-mark">✓</span>
-        <p className="section-kicker">Pedido enviado</p>
-        <h2>Pedido #{order.number}</h2>
-        <p>A cozinha já recebeu sua solicitação para {order.table}.</p>
+      <section className="public-order-success order-tracking">
+        <span className={`success-mark ${order.status === "cancelled" ? "cancelled" : ""}`}>
+          {order.status === "cancelled" ? "×" : "✓"}
+        </span>
+        <p className="section-kicker">Pedido #{order.number}</p>
+        <h2>{statusCopy}</h2>
+        <p>{order.table} · atualização automática</p>
+
+        {order.status !== "cancelled" && (
+          <div className="order-progress" aria-label="Andamento do pedido">
+            {[
+              ["new", "Recebido"],
+              ["preparing", "Preparando"],
+              ["ready", "Pronto"],
+              ["delivered", "Entregue"],
+            ].map(([key, label], index) => (
+              <div
+                className={`order-progress-step ${index <= statusIndex ? "active" : ""}`}
+                key={key}
+              >
+                <span>{index + 1}</span>
+                <small>{label}</small>
+              </div>
+            ))}
+          </div>
+        )}
+
         <strong>{formatMoney(order.total)}</strong>
-        <button className="primary-button" type="button" onClick={() => setOrder(null)}>
-          Voltar ao cardápio
-        </button>
+
+        <div className="order-tracking-actions">
+          {(order.status === "delivered" || order.status === "cancelled") && (
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => {
+                window.localStorage.removeItem(
+                  `calori-active-order:${restaurantSlug}:${tableCode}`,
+                );
+                setOrder(null);
+              }}
+            >
+              Fazer novo pedido
+            </button>
+          )}
+
+          {order.status !== "delivered" && order.status !== "cancelled" && (
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => setOrder(null)}
+            >
+              Adicionar mais itens
+            </button>
+          )}
+        </div>
       </section>
     );
   }
