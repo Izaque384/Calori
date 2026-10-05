@@ -393,3 +393,15 @@ button, input { font: inherit; }
   .order-progress-step > span { width: 30px; height: 30px; }
   .order-progress::before { top: 15px; }
 }
+
+
+/* Conta da mesa */
+.bill-modal { max-width: 520px; }
+.bill-order-list { display: grid; gap: 10px; margin: 20px 0; }
+.bill-order-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #eaded2; }
+.bill-order-row:last-child { border-bottom: 0; }
+.bill-order-row > div { display: grid; gap: 4px; min-width: 0; }
+.bill-order-row small { color: var(--muted); font-size: 11px; }
+.bill-total { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 18px 0; padding: 16px; border-radius: 14px; background: #f7efe7; }
+.bill-total span { color: var(--muted); font-size: 12px; font-weight: 800; }
+.bill-total strong { font-family: Georgia, serif; font-size: 24px; }
