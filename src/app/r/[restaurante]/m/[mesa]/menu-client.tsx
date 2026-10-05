@@ -44,6 +44,16 @@ type CartItem = {
   unitPrice: number;
 };
 
+type ActiveOrderStatus = "new" | "preparing" | "ready" | "delivered" | "cancelled";
+
+type ActiveOrder = {
+  id: string;
+  number: number;
+  total: number;
+  table: string;
+  status: ActiveOrderStatus;
+};
+
 type Props = {
   restaurantSlug: string;
   tableCode: string;
@@ -74,7 +84,7 @@ export default function PublicMenuClient({
   const [cartOpen, setCartOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [order, setOrder] = useState<{ id: string; number: number; total: number; table: string; status: "new" | "preparing" | "ready" | "delivered" | "cancelled" } | null>(null);
+  const [order, setOrder] = useState<ActiveOrder | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
@@ -99,37 +109,68 @@ export default function PublicMenuClient({
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(`calori-active-order:${restaurantSlug}:${tableCode}`);
+    const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
+    const saved = window.localStorage.getItem(storageKey);
+
     if (!saved) return;
 
     try {
-      const parsed = JSON.parse(saved) as typeof order;
-      if (parsed?.id) {
-        setOrder(parsed);
+      const parsed = JSON.parse(saved) as Partial<ActiveOrder>;
+      const validStatuses: ActiveOrderStatus[] = [
+        "new",
+        "preparing",
+        "ready",
+        "delivered",
+        "cancelled",
+      ];
+
+      if (
+        typeof parsed.id === "string" &&
+        typeof parsed.number === "number" &&
+        typeof parsed.total === "number" &&
+        typeof parsed.table === "string" &&
+        parsed.status &&
+        validStatuses.includes(parsed.status)
+      ) {
+        setOrder(parsed as ActiveOrder);
+      } else {
+        window.localStorage.removeItem(storageKey);
       }
     } catch {
-      window.localStorage.removeItem(`calori-active-order:${restaurantSlug}:${tableCode}`);
+      window.localStorage.removeItem(storageKey);
     }
   }, [restaurantSlug, tableCode]);
 
   useEffect(() => {
     if (!order?.id) return;
 
+    const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
     let cancelled = false;
+    let timer: ReturnType<typeof window.setInterval> | undefined;
 
     async function refreshOrderStatus() {
       try {
         const params = new URLSearchParams({ restaurantSlug, tableCode });
-        const response = await fetch(`/api/public/orders/${order.id}/status?${params.toString()}`, {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          `/api/public/orders/${order.id}/status?${params.toString()}`,
+          { cache: "no-store" },
+        );
 
         if (!response.ok) return;
 
-        const data = await response.json();
+        const data = (await response.json()) as {
+          order: {
+            id: string;
+            number: number;
+            total: number;
+            table: string;
+            status: ActiveOrderStatus;
+          };
+        };
+
         if (cancelled) return;
 
-        const nextOrder = {
+        const nextOrder: ActiveOrder = {
           id: data.order.id,
           number: data.order.number,
           total: data.order.total,
@@ -138,25 +179,30 @@ export default function PublicMenuClient({
         };
 
         setOrder(nextOrder);
-        window.localStorage.setItem(
-          `calori-active-order:${restaurantSlug}:${tableCode}`,
-          JSON.stringify(nextOrder),
-        );
+        window.localStorage.setItem(storageKey, JSON.stringify(nextOrder));
 
-        if (data.order.status === "delivered" || data.order.status === "cancelled") {
+        if (
+          (nextOrder.status === "delivered" || nextOrder.status === "cancelled") &&
+          timer !== undefined
+        ) {
           window.clearInterval(timer);
+          timer = undefined;
         }
       } catch {
-        // O status continua visível mesmo se uma atualização falhar.
+        // Mantém o último status conhecido se uma atualização falhar.
       }
     }
 
-    const timer = window.setInterval(refreshOrderStatus, 5000);
     void refreshOrderStatus();
+    timer = window.setInterval(() => {
+      void refreshOrderStatus();
+    }, 5000);
 
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+      }
     };
   }, [order?.id, restaurantSlug, tableCode]);
 
@@ -286,12 +332,12 @@ export default function PublicMenuClient({
         return;
       }
 
-      const nextOrder = {
+      const nextOrder: ActiveOrder = {
         id: data.order.id,
         number: data.order.number,
         total: data.order.total,
         table: data.order.table,
-        status: data.order.status,
+        status: data.order.status as ActiveOrderStatus,
       };
 
       setOrder(nextOrder);
