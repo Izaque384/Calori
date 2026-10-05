@@ -1,12 +1,19 @@
 import { db } from "@/db";
-import { tables } from "@/db/schema";
+import { orders, tableSessions, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 import Link from "next/link";
 import { signOut } from "../actions";
-import { createTable, toggleTable } from "./actions";
+import { closeTableVisit, createTable, toggleTable } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
 
 export default async function TablesPage() {
   const { restaurant } = await requireCurrentRestaurant();
@@ -17,6 +24,71 @@ export default async function TablesPage() {
     .where(eq(tables.restaurantId, restaurant.id))
     .orderBy(asc(tables.name));
 
+  const activeSessions = await db
+    .select({
+      id: tableSessions.id,
+      tableId: tableSessions.tableId,
+      createdAt: tableSessions.createdAt,
+      expiresAt: tableSessions.expiresAt,
+    })
+    .from(tableSessions)
+    .where(
+      and(
+        eq(tableSessions.restaurantId, restaurant.id),
+        gt(tableSessions.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(asc(tableSessions.createdAt));
+
+  const activeSessionIds = activeSessions.map((session) => session.id);
+
+  const activeOrders = activeSessionIds.length
+    ? await db
+        .select({
+          tableId: orders.tableId,
+          sessionId: orders.sessionId,
+          total: orders.total,
+          status: orders.status,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.restaurantId, restaurant.id),
+            inArray(orders.sessionId, activeSessionIds),
+            ne(orders.status, "cancelled"),
+          ),
+        )
+    : [];
+
+  const operationalByTable = new Map<
+    string,
+    {
+      occupied: boolean;
+      startedAt: Date | null;
+      sessionCount: number;
+      orderCount: number;
+      total: number;
+    }
+  >();
+
+  for (const table of rows) {
+    const sessions = activeSessions.filter((session) => session.tableId === table.id);
+    const sessionIds = new Set(sessions.map((session) => session.id));
+    const tableOrders = activeOrders.filter(
+      (order) => order.sessionId && sessionIds.has(order.sessionId),
+    );
+
+    operationalByTable.set(table.id, {
+      occupied: sessions.length > 0,
+      startedAt: sessions[0]?.createdAt ?? null,
+      sessionCount: sessions.length,
+      orderCount: tableOrders.length,
+      total: tableOrders.reduce((sum, order) => sum + Number(order.total), 0),
+    });
+  }
+
+  const occupiedCount = [...operationalByTable.values()].filter((item) => item.occupied).length;
+
   return (
     <main className="dashboard-shell">
       <aside className="dashboard-sidebar">
@@ -24,7 +96,7 @@ export default async function TablesPage() {
         <div className="restaurant-pill">{restaurant.name}</div>
         <nav>
           <a href="/dashboard">Visão geral</a>
-          <span>Pedidos</span>
+          <a href="/dashboard/pedidos">Pedidos</a>
           <a href="/dashboard/cardapio">Cardápio</a>
           <a className="active" href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
@@ -37,10 +109,10 @@ export default async function TablesPage() {
         <div className="page-heading-row">
           <div>
             <p className="eyebrow">Mesas</p>
-            <h1>Organize o salão.</h1>
-            <p className="muted">Cada mesa recebe um endereço público e um QR Code próprio para abrir o cardápio correto.</p>
+            <h1>Operação do salão.</h1>
+            <p className="muted">Acompanhe quais mesas estão em uso, o consumo atual e os QR Codes de acesso.</p>
           </div>
-          <div className="status-chip">{rows.filter((row) => row.active).length} ativas</div>
+          <div className="status-chip">{occupiedCount} {occupiedCount === 1 ? "ocupada" : "ocupadas"}</div>
         </div>
 
         <section className="panel-card tables-create-card">
@@ -71,31 +143,78 @@ export default async function TablesPage() {
             </div>
           ) : (
             <div className="table-card-grid">
-              {rows.map((table) => (
-                <article className="table-card" key={table.id}>
-                  <div className="table-card-head">
-                    <div>
-                      <span className="product-category">{table.active ? "Ativa" : "Pausada"}</span>
-                      <h3>{table.name}</h3>
+              {rows.map((table) => {
+                const operation = operationalByTable.get(table.id) ?? {
+                  occupied: false,
+                  startedAt: null,
+                  sessionCount: 0,
+                  orderCount: 0,
+                  total: 0,
+                };
+
+                return (
+                  <article
+                    className={`table-card operational-table-card ${operation.occupied ? "occupied" : "free"}`}
+                    key={table.id}
+                  >
+                    <div className="table-card-head">
+                      <div>
+                        <span className={`table-operation-status ${operation.occupied ? "occupied" : "free"}`}>
+                          {operation.occupied ? "Ocupada" : "Livre"}
+                        </span>
+                        <h3>{table.name}</h3>
+                      </div>
+                      <span className="table-code">{table.publicCode}</span>
                     </div>
-                    <span className="table-code">{table.publicCode}</span>
-                  </div>
 
-                  <p>QR exclusivo para esta mesa. O cliente será levado direto ao cardápio de {restaurant.name}.</p>
+                    {operation.occupied ? (
+                      <div className="table-operation-summary">
+                        <div>
+                          <span>Consumo atual</span>
+                          <strong>{formatMoney(operation.total)}</strong>
+                        </div>
+                        <div>
+                          <span>Pedidos</span>
+                          <strong>{operation.orderCount}</strong>
+                        </div>
+                        <div>
+                          <span>Desde</span>
+                          <strong>
+                            {operation.startedAt
+                              ? operation.startedAt.toLocaleTimeString("pt-BR", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "—"}
+                          </strong>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="table-free-copy">Nenhuma sessão ativa nesta mesa.</p>
+                    )}
 
-                  <div className="table-card-actions">
-                    <Link className="secondary-link-button" href={`/dashboard/mesas/${table.id}/qr`}>Ver QR Code</Link>
-                    <Link className="text-link-button" href={`/r/${restaurant.slug}/m/${table.publicCode}`} target="_blank">Abrir cardápio</Link>
-                    <form action={toggleTable}>
-                      <input type="hidden" name="tableId" value={table.id} />
-                      <input type="hidden" name="active" value={String(table.active)} />
-                      <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
-                        {table.active ? "Ativa" : "Pausada"}
-                      </button>
-                    </form>
-                  </div>
-                </article>
-              ))}
+                    <div className="table-card-actions">
+                      <Link className="secondary-link-button" href={`/dashboard/mesas/${table.id}/qr`}>Ver QR Code</Link>
+                      <Link className="text-link-button" href={`/r/${restaurant.slug}/m/${table.publicCode}`} target="_blank">Abrir cardápio</Link>
+
+                      {operation.occupied && (
+                        <form action={closeTableVisit}>
+                          <input type="hidden" name="tableId" value={table.id} />
+                          <button className="text-button danger" type="submit">Encerrar visita</button>
+                        </form>
+                      )}
+
+                      <form action={toggleTable}>
+                        <input type="hidden" name="tableId" value={table.id} />
+                        <input type="hidden" name="active" value={String(table.active)} />
+                        <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
+                          {table.active ? "Ativa" : "Pausada"}
+                        </button>
+                      </form>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
