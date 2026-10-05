@@ -373,3 +373,23 @@ button, input { font: inherit; }
 @media (max-width: 640px) {
   .new-order-toast { width: 100%; margin-left: 0; }
 }
+
+
+/* Acompanhamento público do pedido */
+.order-tracking { max-width: 720px; }
+.order-tracking h2 { max-width: 560px; margin-left: auto; margin-right: auto; }
+.success-mark.cancelled { background: #f3e5e2; color: #9c4d42; }
+.order-progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 34px auto 26px; max-width: 620px; position: relative; }
+.order-progress::before { content: ""; position: absolute; top: 17px; left: 12.5%; right: 12.5%; height: 2px; background: #e4d8ca; z-index: 0; }
+.order-progress-step { display: grid; justify-items: center; gap: 8px; position: relative; z-index: 1; color: var(--muted); }
+.order-progress-step > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; background: #eee5dc; border: 2px solid #fffaf2; font-size: 11px; font-weight: 900; }
+.order-progress-step small { font-size: 10px; font-weight: 800; }
+.order-progress-step.active { color: var(--restaurant-accent); }
+.order-progress-step.active > span { background: var(--restaurant-accent); color: white; }
+.order-tracking-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+@media (max-width: 520px) {
+  .order-progress { margin-left: -8px; margin-right: -8px; }
+  .order-progress-step small { font-size: 9px; }
+  .order-progress-step > span { width: 30px; height: 30px; }
+  .order-progress::before { top: 15px; }
+}
