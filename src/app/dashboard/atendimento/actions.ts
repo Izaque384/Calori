@@ -17,6 +17,7 @@ export async function handleServiceRequest(formData: FormData) {
       id: serviceRequests.id,
       type: serviceRequests.type,
       sessionId: serviceRequests.sessionId,
+      tableId: serviceRequests.tableId,
     })
     .from(serviceRequests)
     .where(
@@ -46,13 +47,13 @@ export async function handleServiceRequest(formData: FormData) {
       ),
     );
 
-  if (request.type === "request_bill" && request.sessionId) {
+  if (request.type === "request_bill") {
     await db
       .update(tableSessions)
       .set({ expiresAt: handledAt })
       .where(
         and(
-          eq(tableSessions.id, request.sessionId),
+          eq(tableSessions.tableId, request.tableId),
           eq(tableSessions.restaurantId, restaurant.id),
         ),
       );
