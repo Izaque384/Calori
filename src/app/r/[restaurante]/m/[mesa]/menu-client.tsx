@@ -44,16 +44,6 @@ type CartItem = {
   unitPrice: number;
 };
 
-type ActiveOrderStatus = "new" | "preparing" | "ready" | "delivered" | "cancelled";
-
-type ActiveOrder = {
-  id: string;
-  number: number;
-  total: number;
-  table: string;
-  status: ActiveOrderStatus;
-};
-
 type Props = {
   restaurantSlug: string;
   tableCode: string;
@@ -84,7 +74,7 @@ export default function PublicMenuClient({
   const [cartOpen, setCartOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [order, setOrder] = useState<ActiveOrder | null>(null);
+  const [order, setOrder] = useState<{ number: number; total: number; table: string } | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
@@ -111,7 +101,15 @@ export default function PublicMenuClient({
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
 
-  async function createTableSession() {
+  async function ensureTableSession() {
+    if (sessionToken) return sessionToken;
+
+    const stored = window.localStorage.getItem(tableSessionKey);
+    if (stored) {
+      setSessionToken(stored);
+      return stored;
+    }
+
     const response = await fetch("/api/public/session", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -130,150 +128,12 @@ export default function PublicMenuClient({
     return token;
   }
 
-  async function ensureTableSession() {
-    if (sessionToken) return sessionToken;
-
+  useEffect(() => {
     const stored = window.localStorage.getItem(tableSessionKey);
     if (stored) {
       setSessionToken(stored);
-      return stored;
     }
-
-    return createTableSession();
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    const stored = window.localStorage.getItem(tableSessionKey);
-
-    if (stored) {
-      setSessionToken(stored);
-      return;
-    }
-
-    async function startSession() {
-      try {
-        const response = await fetch("/api/public/session", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ restaurantSlug, tableCode }),
-        });
-
-        const data = await response.json();
-        if (cancelled || !response.ok || !data.session?.token) return;
-
-        const token = String(data.session.token);
-        window.localStorage.setItem(tableSessionKey, token);
-        setSessionToken(token);
-      } catch {
-        // A sessão também pode ser criada sob demanda ao enviar um pedido.
-      }
-    }
-
-    void startSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [restaurantSlug, tableCode, tableSessionKey]);
-
-  useEffect(() => {
-    const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
-    const saved = window.localStorage.getItem(storageKey);
-
-    if (!saved) return;
-
-    try {
-      const parsed = JSON.parse(saved) as Partial<ActiveOrder>;
-      const validStatuses: ActiveOrderStatus[] = [
-        "new",
-        "preparing",
-        "ready",
-        "delivered",
-        "cancelled",
-      ];
-
-      if (
-        typeof parsed.id === "string" &&
-        typeof parsed.number === "number" &&
-        typeof parsed.total === "number" &&
-        typeof parsed.table === "string" &&
-        parsed.status &&
-        validStatuses.includes(parsed.status)
-      ) {
-        setOrder(parsed as ActiveOrder);
-      } else {
-        window.localStorage.removeItem(storageKey);
-      }
-    } catch {
-      window.localStorage.removeItem(storageKey);
-    }
-  }, [restaurantSlug, tableCode]);
-
-  useEffect(() => {
-    if (!order?.id) return;
-
-    const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
-    let cancelled = false;
-    let timerId: number | null = null;
-
-    async function refreshOrderStatus() {
-      try {
-        const params = new URLSearchParams({ restaurantSlug, tableCode });
-        const response = await fetch(
-          `/api/public/orders/${order.id}/status?${params.toString()}`,
-          { cache: "no-store" },
-        );
-
-        if (!response.ok) return;
-
-        const data = (await response.json()) as {
-          order: {
-            id: string;
-            number: number;
-            total: number;
-            table: string;
-            status: ActiveOrderStatus;
-          };
-        };
-
-        if (cancelled) return;
-
-        const nextOrder: ActiveOrder = {
-          id: data.order.id,
-          number: data.order.number,
-          total: data.order.total,
-          table: data.order.table,
-          status: data.order.status,
-        };
-
-        setOrder(nextOrder);
-        window.localStorage.setItem(storageKey, JSON.stringify(nextOrder));
-
-        if (
-          (nextOrder.status === "delivered" || nextOrder.status === "cancelled") &&
-          timerId !== null
-        ) {
-          window.clearInterval(timerId);
-          timerId = null;
-        }
-      } catch {
-        // Mantém o último status conhecido se uma atualização falhar.
-      }
-    }
-
-    void refreshOrderStatus();
-    timerId = window.setInterval(() => {
-      void refreshOrderStatus();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      if (timerId !== null) {
-        window.clearInterval(timerId);
-      }
-    };
-  }, [order?.id, restaurantSlug, tableCode]);
+  }, [tableSessionKey]);
 
   function openProduct(product: ProductItem) {
     setActiveProduct(product);
@@ -407,19 +267,11 @@ export default function PublicMenuClient({
         return;
       }
 
-      const nextOrder: ActiveOrder = {
-        id: data.order.id,
+      setOrder({
         number: data.order.number,
         total: data.order.total,
         table: data.order.table,
-        status: data.order.status as ActiveOrderStatus,
-      };
-
-      setOrder(nextOrder);
-      window.localStorage.setItem(
-        `calori-active-order:${restaurantSlug}:${tableCode}`,
-        JSON.stringify(nextOrder),
-      );
+      });
       setCart([]);
       setCartOpen(false);
     } catch {
@@ -430,74 +282,16 @@ export default function PublicMenuClient({
   }
 
   if (order) {
-    const statusIndex = ["new", "preparing", "ready", "delivered"].indexOf(order.status);
-    const statusCopy =
-      order.status === "new"
-        ? "Seu pedido foi recebido pelo restaurante."
-        : order.status === "preparing"
-          ? "Seu pedido está sendo preparado."
-          : order.status === "ready"
-            ? "Seu pedido está pronto."
-            : order.status === "delivered"
-              ? "Pedido entregue. Bom apetite!"
-              : "Este pedido foi cancelado.";
-
     return (
-      <section className="public-order-success order-tracking">
-        <span className={`success-mark ${order.status === "cancelled" ? "cancelled" : ""}`}>
-          {order.status === "cancelled" ? "×" : "✓"}
-        </span>
-        <p className="section-kicker">Pedido #{order.number}</p>
-        <h2>{statusCopy}</h2>
-        <p>{order.table} · atualização automática</p>
-
-        {order.status !== "cancelled" && (
-          <div className="order-progress" aria-label="Andamento do pedido">
-            {[
-              ["new", "Recebido"],
-              ["preparing", "Preparando"],
-              ["ready", "Pronto"],
-              ["delivered", "Entregue"],
-            ].map(([key, label], index) => (
-              <div
-                className={`order-progress-step ${index <= statusIndex ? "active" : ""}`}
-                key={key}
-              >
-                <span>{index + 1}</span>
-                <small>{label}</small>
-              </div>
-            ))}
-          </div>
-        )}
-
+      <section className="public-order-success">
+        <span className="success-mark">✓</span>
+        <p className="section-kicker">Pedido enviado</p>
+        <h2>Pedido #{order.number}</h2>
+        <p>A cozinha já recebeu sua solicitação para {order.table}.</p>
         <strong>{formatMoney(order.total)}</strong>
-
-        <div className="order-tracking-actions">
-          {(order.status === "delivered" || order.status === "cancelled") && (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => {
-                window.localStorage.removeItem(
-                  `calori-active-order:${restaurantSlug}:${tableCode}`,
-                );
-                setOrder(null);
-              }}
-            >
-              Fazer novo pedido
-            </button>
-          )}
-
-          {order.status !== "delivered" && order.status !== "cancelled" && (
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => setOrder(null)}
-            >
-              Adicionar mais itens
-            </button>
-          )}
-        </div>
+        <button className="primary-button" type="button" onClick={() => setOrder(null)}>
+          Voltar ao cardápio
+        </button>
       </section>
     );
   }
