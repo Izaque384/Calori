@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { serviceRequests, tables } from "@/db/schema";
+import { orders, serviceRequests, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray, ne } from "drizzle-orm";
 import { signOut } from "../actions";
 import { cancelServiceRequest, handleServiceRequest } from "./actions";
 import ServiceMonitor from "./service-monitor";
@@ -28,6 +28,7 @@ export default async function ServicePage() {
       status: serviceRequests.status,
       createdAt: serviceRequests.createdAt,
       handledAt: serviceRequests.handledAt,
+      sessionId: serviceRequests.sessionId,
       tableName: tables.name,
     })
     .from(serviceRequests)
@@ -37,6 +38,35 @@ export default async function ServicePage() {
 
   const pending = rows.filter((row) => row.status === "pending");
   const history = rows.filter((row) => row.status !== "pending").slice(0, 20);
+
+  const pendingBillSessionIds = pending
+    .filter((row) => row.type === "request_bill" && row.sessionId)
+    .map((row) => row.sessionId as string);
+
+  const billOrders = pendingBillSessionIds.length
+    ? await db
+        .select({
+          sessionId: orders.sessionId,
+          total: orders.total,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.restaurantId, restaurant.id),
+            inArray(orders.sessionId, pendingBillSessionIds),
+            ne(orders.status, "cancelled"),
+          ),
+        )
+    : [];
+
+  const totalsBySession = new Map<string, { total: number; count: number }>();
+  for (const order of billOrders) {
+    if (!order.sessionId) continue;
+    const current = totalsBySession.get(order.sessionId) ?? { total: 0, count: 0 };
+    current.total += Number(order.total);
+    current.count += 1;
+    totalsBySession.set(order.sessionId, current);
+  }
 
   return (
     <main className="dashboard-shell">
@@ -80,7 +110,12 @@ export default async function ServicePage() {
               <span>Quando um cliente chamar o atendimento ou pedir a conta, aparecerá aqui.</span>
             </div>
           ) : (
-            pending.map((request) => (
+            pending.map((request) => {
+              const billSummary = request.sessionId
+                ? totalsBySession.get(request.sessionId)
+                : undefined;
+
+              return (
               <article className="service-card" key={request.id}>
                 <span className={`service-type ${request.type}`}>
                   {requestLabel(request.type)}
@@ -93,10 +128,27 @@ export default async function ServicePage() {
                   })}
                 </p>
 
+                {request.type === "request_bill" && (
+                  <div className="service-bill-summary">
+                    <span>Consumo da sessão</span>
+                    <strong>
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(billSummary?.total ?? 0)}
+                    </strong>
+                    <small>
+                      {billSummary?.count ?? 0} {(billSummary?.count ?? 0) === 1 ? "pedido" : "pedidos"}
+                    </small>
+                  </div>
+                )}
+
                 <div className="service-card-actions">
                   <form action={handleServiceRequest}>
                     <input type="hidden" name="requestId" value={request.id} />
-                    <button className="primary-button" type="submit">Marcar como atendida</button>
+                    <button className="primary-button" type="submit">
+                      {request.type === "request_bill" ? "Encerrar conta" : "Marcar como atendida"}
+                    </button>
                   </form>
                   <form action={cancelServiceRequest}>
                     <input type="hidden" name="requestId" value={request.id} />
@@ -104,7 +156,8 @@ export default async function ServicePage() {
                   </form>
                 </div>
               </article>
-            ))
+              );
+            })
           )}
         </section>
 
