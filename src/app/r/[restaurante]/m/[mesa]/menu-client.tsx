@@ -79,6 +79,21 @@ export default function PublicMenuClient({
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [billOpen, setBillOpen] = useState(false);
+  const [billLoading, setBillLoading] = useState(false);
+  const [billError, setBillError] = useState("");
+  const [bill, setBill] = useState<{
+    table: string;
+    orderCount: number;
+    total: number;
+    orders: Array<{
+      id: string;
+      number: number;
+      status: string;
+      total: number;
+      createdAt: string;
+    }>;
+  } | null>(null);
 
   const activeGroups = activeProduct
     ? optionGroups.filter((group) => group.productId === activeProduct.id)
@@ -202,6 +217,41 @@ export default function PublicMenuClient({
         )
         .filter((item) => item.quantity > 0),
     );
+  }
+
+  async function openBill() {
+    if (billLoading) return;
+
+    setBillLoading(true);
+    setBillError("");
+
+    try {
+      const token = await ensureTableSession();
+      const params = new URLSearchParams({
+        restaurantSlug,
+        tableCode,
+        sessionToken: token,
+      });
+
+      const response = await fetch(`/api/public/bill?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setBillError(data.error || "Não conseguimos carregar a conta.");
+        setBillOpen(true);
+        return;
+      }
+
+      setBill(data.bill);
+      setBillOpen(true);
+    } catch {
+      setBillError("Não conseguimos carregar a conta. Tente novamente.");
+      setBillOpen(true);
+    } finally {
+      setBillLoading(false);
+    }
   }
 
   async function sendServiceRequest(type: "call_waiter" | "request_bill") {
@@ -455,6 +505,10 @@ export default function PublicMenuClient({
                 <strong>Chamar garçom</strong>
                 <span>Peça atendimento na sua mesa.</span>
               </button>
+              <button type="button" disabled={billLoading} onClick={openBill}>
+                <strong>Ver conta da mesa</strong>
+                <span>Veja os pedidos e o total acumulado.</span>
+              </button>
               <button type="button" disabled={serviceSending} onClick={() => sendServiceRequest("request_bill")}>
                 <strong>Pedir a conta</strong>
                 <span>Avise a equipe que deseja encerrar.</span>
@@ -462,6 +516,67 @@ export default function PublicMenuClient({
             </div>
 
             {serviceMessage && <p className="service-feedback">{serviceMessage}</p>}
+          </section>
+        </div>
+      )}
+
+      {billOpen && (
+        <div className="menu-modal-backdrop" onClick={() => setBillOpen(false)}>
+          <section className="menu-modal bill-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setBillOpen(false)}>×</button>
+            <span className="section-kicker">Conta da mesa</span>
+            <h2>{bill?.table || "Sua mesa"}</h2>
+
+            {billError ? (
+              <p className="form-error">{billError}</p>
+            ) : bill ? (
+              <>
+                {bill.orders.length === 0 ? (
+                  <p className="muted">Nenhum pedido foi registrado nesta sessão ainda.</p>
+                ) : (
+                  <div className="bill-order-list">
+                    {bill.orders.map((item) => (
+                      <div className="bill-order-row" key={item.id}>
+                        <div>
+                          <strong>Pedido #{item.number}</strong>
+                          <small>
+                            {new Date(item.createdAt).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {" · "}
+                            {item.status === "new"
+                              ? "Recebido"
+                              : item.status === "preparing"
+                                ? "Preparando"
+                                : item.status === "ready"
+                                  ? "Pronto"
+                                  : "Entregue"}
+                          </small>
+                        </div>
+                        <strong>{formatMoney(item.total)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="bill-total">
+                  <span>Total da sessão</span>
+                  <strong>{formatMoney(bill.total)}</strong>
+                </div>
+
+                <button
+                  className="primary-button cart-submit"
+                  type="button"
+                  disabled={serviceSending || bill.orderCount === 0}
+                  onClick={() => sendServiceRequest("request_bill")}
+                >
+                  {serviceSending ? "Enviando..." : "Pedir a conta"}
+                </button>
+              </>
+            ) : (
+              <p className="muted">Carregando conta...</p>
+            )}
           </section>
         </div>
       )}
