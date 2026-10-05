@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { orders, restaurantMembers, restaurants, serviceRequests, tables } from "@/db/schema";
+import { orders, restaurantMembers, restaurants, serviceRequests, tableSessions } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { signOut } from "./actions";
 
@@ -48,6 +48,7 @@ export default async function DashboardPage() {
         and(
           eq(orders.restaurantId, restaurant.id),
           gte(orders.createdAt, startOfDay),
+          ne(orders.status, "cancelled"),
         ),
       ),
     db
@@ -60,9 +61,14 @@ export default async function DashboardPage() {
         ),
       ),
     db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(tables)
-      .where(and(eq(tables.restaurantId, restaurant.id), eq(tables.active, true))),
+      .select({ count: sql<number>`count(distinct ${tableSessions.tableId})::int` })
+      .from(tableSessions)
+      .where(
+        and(
+          eq(tableSessions.restaurantId, restaurant.id),
+          gt(tableSessions.expiresAt, new Date()),
+        ),
+      ),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(serviceRequests)
@@ -96,7 +102,7 @@ export default async function DashboardPage() {
         <div className="metric-grid">
           <article><span>Pedidos hoje</span><strong>{today.count}</strong></article>
           <article><span>Em andamento</span><strong>{inProgress}</strong></article>
-          <article><span>Mesas ativas</span><strong>{activeTables}</strong></article>
+          <article><span>Mesas ocupadas</span><strong>{activeTables}</strong></article>
           <article><span>Total em pedidos</span><strong>{formatMoney(today.total)}</strong></article>
         </div>
         <a href="/dashboard/atendimento" className="service-summary-card">
