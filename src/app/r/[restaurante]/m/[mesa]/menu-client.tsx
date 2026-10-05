@@ -146,7 +146,7 @@ export default function PublicMenuClient({
 
     const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
     let cancelled = false;
-    let timer: ReturnType<typeof window.setInterval> | undefined;
+    let timerId: number | null = null;
 
     async function refreshOrderStatus() {
       try {
@@ -183,10 +183,10 @@ export default function PublicMenuClient({
 
         if (
           (nextOrder.status === "delivered" || nextOrder.status === "cancelled") &&
-          timer !== undefined
+          timerId !== null
         ) {
-          window.clearInterval(timer);
-          timer = undefined;
+          window.clearInterval(timerId);
+          timerId = null;
         }
       } catch {
         // Mantém o último status conhecido se uma atualização falhar.
@@ -194,14 +194,14 @@ export default function PublicMenuClient({
     }
 
     void refreshOrderStatus();
-    timer = window.setInterval(() => {
+    timerId = window.setInterval(() => {
       void refreshOrderStatus();
     }, 5000);
 
     return () => {
       cancelled = true;
-      if (timer !== undefined) {
-        window.clearInterval(timer);
+      if (timerId !== null) {
+        window.clearInterval(timerId);
       }
     };
   }, [order?.id, restaurantSlug, tableCode]);
