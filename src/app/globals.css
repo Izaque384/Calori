@@ -405,3 +405,10 @@ button, input { font: inherit; }
 .bill-total { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 18px 0; padding: 16px; border-radius: 14px; background: #f7efe7; }
 .bill-total span { color: var(--muted); font-size: 12px; font-weight: 800; }
 .bill-total strong { font-family: Georgia, serif; font-size: 24px; }
+
+
+/* Fechamento de conta */
+.service-bill-summary { display: grid; gap: 4px; margin: 14px 0 18px; padding: 13px 14px; border-radius: 13px; background: #f7efe7; border: 1px solid #eaded2; }
+.service-bill-summary span { color: var(--muted); font-size: 11px; font-weight: 800; }
+.service-bill-summary strong { font-family: Georgia, serif; font-size: 23px; }
+.service-bill-summary small { color: var(--muted); font-size: 10px; }
