@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { orders, restaurants, tables } from "@/db/schema";
+import { orders, restaurants, tableSessions, tables } from "@/db/schema";
 import { getValidTableSession } from "@/lib/table-session";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -52,24 +52,39 @@ export async function GET(request: Request) {
     );
   }
 
-  const rows = await db
-    .select({
-      id: orders.id,
-      number: orders.number,
-      status: orders.status,
-      total: orders.total,
-      createdAt: orders.createdAt,
-    })
-    .from(orders)
+  const activeSessions = await db
+    .select({ id: tableSessions.id })
+    .from(tableSessions)
     .where(
       and(
-        eq(orders.restaurantId, restaurant.id),
-        eq(orders.tableId, table.id),
-        eq(orders.sessionId, tableSession.id),
-        ne(orders.status, "cancelled"),
+        eq(tableSessions.restaurantId, restaurant.id),
+        eq(tableSessions.tableId, table.id),
+        gt(tableSessions.expiresAt, new Date()),
       ),
-    )
-    .orderBy(asc(orders.createdAt));
+    );
+
+  const activeSessionIds = activeSessions.map((session) => session.id);
+
+  const rows = activeSessionIds.length
+    ? await db
+        .select({
+          id: orders.id,
+          number: orders.number,
+          status: orders.status,
+          total: orders.total,
+          createdAt: orders.createdAt,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.restaurantId, restaurant.id),
+            eq(orders.tableId, table.id),
+            inArray(orders.sessionId, activeSessionIds),
+            ne(orders.status, "cancelled"),
+          ),
+        )
+        .orderBy(asc(orders.createdAt))
+    : [];
 
   const total = rows.reduce((sum, order) => sum + Number(order.total), 0);
 
