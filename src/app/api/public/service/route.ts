@@ -1,10 +1,12 @@
 import { db } from "@/db";
 import { restaurants, serviceRequests, tables } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { getValidTableSession } from "@/lib/table-session";
 
 type Payload = {
   restaurantSlug?: string;
   tableCode?: string;
+  sessionToken?: string;
   type?: "call_waiter" | "request_bill";
 };
 
@@ -19,9 +21,10 @@ export async function POST(request: Request) {
 
   const restaurantSlug = String(payload.restaurantSlug ?? "").trim();
   const tableCode = String(payload.tableCode ?? "").trim();
+  const sessionToken = String(payload.sessionToken ?? "").trim();
   const type = payload.type;
 
-  if (!restaurantSlug || !tableCode || !type || !["call_waiter", "request_bill"].includes(type)) {
+  if (!restaurantSlug || !tableCode || !sessionToken || !type || !["call_waiter", "request_bill"].includes(type)) {
     return Response.json({ error: "Dados inválidos." }, { status: 400 });
   }
 
@@ -51,6 +54,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "Mesa indisponível." }, { status: 404 });
   }
 
+  const tableSession = await getValidTableSession({
+    token: sessionToken,
+    restaurantId: restaurant.id,
+    tableId: table.id,
+  });
+
+  if (!tableSession) {
+    return Response.json(
+      { error: "Sua sessão da mesa expirou. Reabra o cardápio pelo QR Code." },
+      { status: 401 },
+    );
+  }
+
   const [existing] = await db
     .select({ id: serviceRequests.id })
     .from(serviceRequests)
@@ -75,6 +91,7 @@ export async function POST(request: Request) {
   await db.insert(serviceRequests).values({
     restaurantId: restaurant.id,
     tableId: table.id,
+    sessionId: tableSession.id,
     type,
     status: "pending",
   });
