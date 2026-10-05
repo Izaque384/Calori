@@ -74,6 +74,7 @@ export async function POST(request: Request) {
       and(
         eq(serviceRequests.restaurantId, restaurant.id),
         eq(serviceRequests.tableId, table.id),
+        eq(serviceRequests.sessionId, tableSession.id),
         eq(serviceRequests.type, type),
         eq(serviceRequests.status, "pending"),
       ),
