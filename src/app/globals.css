@@ -412,3 +412,23 @@ button, input { font: inherit; }
 .service-bill-summary span { color: var(--muted); font-size: 11px; font-weight: 800; }
 .service-bill-summary strong { font-family: Georgia, serif; font-size: 23px; }
 .service-bill-summary small { color: var(--muted); font-size: 10px; }
+
+
+/* Operação das mesas */
+.operational-table-card { position: relative; overflow: hidden; }
+.operational-table-card.occupied { border-color: rgba(199,90,58,.34); }
+.table-operation-status { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+.table-operation-status::before { content: ""; width: 8px; height: 8px; border-radius: 999px; }
+.table-operation-status.occupied { color: #9b452e; }
+.table-operation-status.occupied::before { background: #c75a3a; box-shadow: 0 0 0 4px rgba(199,90,58,.10); }
+.table-operation-status.free { color: #58775d; }
+.table-operation-status.free::before { background: #6d9973; box-shadow: 0 0 0 4px rgba(109,153,115,.10); }
+.table-operation-summary { display: grid; grid-template-columns: 1.4fr .8fr .8fr; gap: 10px; margin: 16px 0; }
+.table-operation-summary > div { display: grid; gap: 4px; padding: 12px; border-radius: 12px; background: #f8f1e9; }
+.table-operation-summary span { color: var(--muted); font-size: 10px; font-weight: 800; }
+.table-operation-summary strong { font-size: 14px; }
+.table-free-copy { margin: 16px 0; color: var(--muted); font-size: 12px; }
+@media (max-width: 560px) {
+  .table-operation-summary { grid-template-columns: 1fr 1fr; }
+  .table-operation-summary > div:first-child { grid-column: 1 / -1; }
+}
