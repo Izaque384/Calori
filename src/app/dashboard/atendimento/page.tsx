@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { orders, serviceRequests, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { signOut } from "../actions";
 import { cancelServiceRequest, handleServiceRequest } from "./actions";
 import ServiceMonitor from "./service-monitor";
