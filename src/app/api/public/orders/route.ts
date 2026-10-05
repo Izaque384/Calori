@@ -10,6 +10,7 @@ import {
   tables,
 } from "@/db/schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { getValidTableSession } from "@/lib/table-session";
 
 type CartItemInput = {
   productId: string;
@@ -21,6 +22,7 @@ type CartItemInput = {
 type OrderPayload = {
   restaurantSlug?: string;
   tableCode?: string;
+  sessionToken?: string;
   items?: CartItemInput[];
   note?: string;
 };
@@ -40,9 +42,10 @@ export async function POST(request: Request) {
 
   const restaurantSlug = String(payload.restaurantSlug ?? "").trim();
   const tableCode = String(payload.tableCode ?? "").trim();
+  const sessionToken = String(payload.sessionToken ?? "").trim();
   const items = Array.isArray(payload.items) ? payload.items : [];
 
-  if (!restaurantSlug || !tableCode || items.length === 0) {
+  if (!restaurantSlug || !tableCode || !sessionToken || items.length === 0) {
     return Response.json({ error: "O carrinho está vazio ou a mesa é inválida." }, { status: 400 });
   }
 
@@ -74,6 +77,19 @@ export async function POST(request: Request) {
 
   if (!table) {
     return Response.json({ error: "Mesa indisponível." }, { status: 404 });
+  }
+
+  const tableSession = await getValidTableSession({
+    token: sessionToken,
+    restaurantId: restaurant.id,
+    tableId: table.id,
+  });
+
+  if (!tableSession) {
+    return Response.json(
+      { error: "Sua sessão da mesa expirou. Reabra o cardápio pelo QR Code." },
+      { status: 401 },
+    );
   }
 
   const productIds = [...new Set(items.map((item) => String(item.productId ?? "")))];
@@ -221,6 +237,7 @@ export async function POST(request: Request) {
         .values({
           restaurantId: restaurant.id,
           tableId: table.id,
+          sessionId: tableSession.id,
           number: nextNumber,
           status: "new",
           subtotal: subtotal.toFixed(2),
