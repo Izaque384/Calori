@@ -88,6 +88,7 @@ export default function PublicMenuClient({
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   const activeGroups = activeProduct
     ? optionGroups.filter((group) => group.productId === activeProduct.id)
@@ -107,6 +108,74 @@ export default function PublicMenuClient({
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
+
+  async function createTableSession() {
+    const response = await fetch("/api/public/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ restaurantSlug, tableCode }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.session?.token) {
+      throw new Error(data.error || "Não conseguimos iniciar a sessão da mesa.");
+    }
+
+    const token = String(data.session.token);
+    window.localStorage.setItem(tableSessionKey, token);
+    setSessionToken(token);
+    return token;
+  }
+
+  async function ensureTableSession() {
+    if (sessionToken) return sessionToken;
+
+    const stored = window.localStorage.getItem(tableSessionKey);
+    if (stored) {
+      setSessionToken(stored);
+      return stored;
+    }
+
+    return createTableSession();
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    const stored = window.localStorage.getItem(tableSessionKey);
+
+    if (stored) {
+      setSessionToken(stored);
+      return;
+    }
+
+    async function startSession() {
+      try {
+        const response = await fetch("/api/public/session", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ restaurantSlug, tableCode }),
+        });
+
+        const data = await response.json();
+        if (cancelled || !response.ok || !data.session?.token) return;
+
+        const token = String(data.session.token);
+        window.localStorage.setItem(tableSessionKey, token);
+        setSessionToken(token);
+      } catch {
+        // A sessão também pode ser criada sob demanda ao enviar um pedido.
+      }
+    }
+
+    void startSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantSlug, tableCode, tableSessionKey]);
 
   useEffect(() => {
     const storageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
@@ -282,12 +351,15 @@ export default function PublicMenuClient({
     setServiceMessage("");
 
     try {
+      const token = await ensureTableSession();
+
       const response = await fetch("/api/public/service", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           restaurantSlug,
           tableCode,
+          sessionToken: token,
           type,
         }),
       });
@@ -310,12 +382,15 @@ export default function PublicMenuClient({
     setError("");
 
     try {
+      const token = await ensureTableSession();
+
       const response = await fetch("/api/public/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           restaurantSlug,
           tableCode,
+          sessionToken: token,
           items: cart.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
