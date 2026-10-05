@@ -194,8 +194,12 @@ export default function PublicMenuClient({
 
     for (const group of activeGroups) {
       const count = group.options.filter((option) => selected.includes(option.id)).length;
-      if (count < group.minSelections) {
-        setError(`Escolha pelo menos ${group.minSelections} opção(ões) em “${group.name}”.`);
+      const minimumRequired = group.required
+        ? Math.max(1, group.minSelections)
+        : group.minSelections;
+
+      if (count < minimumRequired) {
+        setError(`Escolha pelo menos ${minimumRequired} opção(ões) em “${group.name}”.`);
         return;
       }
     }
