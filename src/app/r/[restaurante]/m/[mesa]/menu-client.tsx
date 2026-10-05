@@ -116,15 +116,7 @@ export default function PublicMenuClient({
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
 
-  async function ensureTableSession() {
-    if (sessionToken) return sessionToken;
-
-    const stored = window.localStorage.getItem(tableSessionKey);
-    if (stored) {
-      setSessionToken(stored);
-      return stored;
-    }
-
+  async function createTableSession() {
     const response = await fetch("/api/public/session", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -141,6 +133,24 @@ export default function PublicMenuClient({
     window.localStorage.setItem(tableSessionKey, token);
     setSessionToken(token);
     return token;
+  }
+
+  async function ensureTableSession() {
+    if (sessionToken) return sessionToken;
+
+    const stored = window.localStorage.getItem(tableSessionKey);
+    if (stored) {
+      setSessionToken(stored);
+      return stored;
+    }
+
+    return createTableSession();
+  }
+
+  async function renewTableSession() {
+    window.localStorage.removeItem(tableSessionKey);
+    setSessionToken(null);
+    return createTableSession();
   }
 
   useEffect(() => {
@@ -233,9 +243,18 @@ export default function PublicMenuClient({
         sessionToken: token,
       });
 
-      const response = await fetch(`/api/public/bill?${params.toString()}`, {
+      let response = await fetch(`/api/public/bill?${params.toString()}`, {
         cache: "no-store",
       });
+
+      if (response.status === 401) {
+        const freshToken = await renewTableSession();
+        params.set("sessionToken", freshToken);
+        response = await fetch(`/api/public/bill?${params.toString()}`, {
+          cache: "no-store",
+        });
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -263,7 +282,7 @@ export default function PublicMenuClient({
     try {
       const token = await ensureTableSession();
 
-      const response = await fetch("/api/public/service", {
+      let response = await fetch("/api/public/service", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -273,6 +292,20 @@ export default function PublicMenuClient({
           type,
         }),
       });
+
+      if (response.status === 401) {
+        const freshToken = await renewTableSession();
+        response = await fetch("/api/public/service", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            restaurantSlug,
+            tableCode,
+            sessionToken: freshToken,
+            type,
+          }),
+        });
+      }
 
       const data = await response.json();
       setServiceMessage(
@@ -294,7 +327,7 @@ export default function PublicMenuClient({
     try {
       const token = await ensureTableSession();
 
-      const response = await fetch("/api/public/orders", {
+      let response = await fetch("/api/public/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -309,6 +342,25 @@ export default function PublicMenuClient({
           })),
         }),
       });
+
+      if (response.status === 401) {
+        const freshToken = await renewTableSession();
+        response = await fetch("/api/public/orders", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            restaurantSlug,
+            tableCode,
+            sessionToken: freshToken,
+            items: cart.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              optionIds: item.optionIds,
+              note: item.note,
+            })),
+          }),
+        });
+      }
 
       const data = await response.json();
 
