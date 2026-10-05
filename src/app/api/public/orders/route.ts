@@ -186,7 +186,11 @@ export async function POST(request: Request) {
     for (const group of groupsForProduct) {
       const count = selectedOptions.filter((option) => option?.groupId === group.id).length;
 
-      if (count < group.minSelections || count > group.maxSelections) {
+      const minimumRequired = group.required
+        ? Math.max(1, group.minSelections)
+        : group.minSelections;
+
+      if (count < minimumRequired || count > group.maxSelections) {
         return Response.json(
           { error: `Revise as escolhas obrigatórias de ${product.name}.` },
           { status: 400 },
