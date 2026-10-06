@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { assertPermission, canManageCatalog } from "@/lib/permissions";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -42,7 +43,8 @@ async function assertProductOwnership(productId: string, restaurantId: string) {
 }
 
 export async function createCategory(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
   const name = String(formData.get("name") ?? "").trim();
 
   if (!name) return;
@@ -64,7 +66,8 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function deleteCategory(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
   const categoryId = String(formData.get("categoryId") ?? "");
 
   if (!categoryId || !(await assertCategoryOwnership(categoryId, restaurant.id))) return;
@@ -77,7 +80,8 @@ export async function deleteCategory(formData: FormData) {
 }
 
 export async function createProduct(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
 
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -103,7 +107,8 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function toggleProductAvailability(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
   const productId = String(formData.get("productId") ?? "");
   const available = String(formData.get("available") ?? "") === "true";
 
@@ -118,7 +123,8 @@ export async function toggleProductAvailability(formData: FormData) {
 }
 
 export async function deleteProduct(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
   const productId = String(formData.get("productId") ?? "");
 
   if (!productId || !(await assertProductOwnership(productId, restaurant.id))) return;
@@ -131,7 +137,8 @@ export async function deleteProduct(formData: FormData) {
 }
 
 export async function createOptionGroup(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
 
   const productId = String(formData.get("productId") ?? "");
   const name = String(formData.get("groupName") ?? "").trim();
@@ -152,7 +159,8 @@ export async function createOptionGroup(formData: FormData) {
 }
 
 export async function createOption(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
 
   const groupId = String(formData.get("groupId") ?? "");
   const name = String(formData.get("optionName") ?? "").trim();
@@ -179,7 +187,8 @@ export async function createOption(formData: FormData) {
 }
 
 export async function toggleOptionAvailability(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
 
   const optionId = String(formData.get("optionId") ?? "");
   const available = String(formData.get("available") ?? "") === "true";
