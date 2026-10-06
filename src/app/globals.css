@@ -445,3 +445,20 @@ button, input { font: inherit; }
   .product-image-form { grid-template-columns: 1fr; }
   .public-product-image { width: 70px; height: 70px; }
 }
+
+
+/* Edição inline do cardápio */
+.category-edit-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; flex: 1; }
+.category-edit-form input { min-width: 0; border: 1px solid #d9cbbc; background: #fffdf9; border-radius: 10px; padding: 9px 10px; font: inherit; }
+.product-edit-form { display: grid; gap: 10px; margin: 16px 0 8px; padding: 14px; border-radius: 14px; background: #fbf6f0; border: 1px solid #eaded2; }
+.product-edit-form label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.product-edit-form input,
+.product-edit-form select,
+.product-edit-form textarea { width: 100%; border: 1px solid #d9cbbc; background: #fffdf9; border-radius: 10px; padding: 10px 11px; font: inherit; color: var(--charcoal); }
+.option-group-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.option-group-title > div { display: grid; gap: 3px; }
+.option-row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 620px) {
+  .category-edit-form { grid-template-columns: 1fr; }
+  .option-group-title { flex-direction: column; }
+}
