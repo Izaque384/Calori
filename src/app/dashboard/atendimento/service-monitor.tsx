@@ -16,10 +16,7 @@ type Props = {
 
 const SOUND_KEY = "calori-service-sound-enabled";
 
-const CHIME_URL =
-  "https://raw.githubusercontent.com/ibrews/Understudy/main/android/app/src/main/res/raw/chime.wav";
-
-function playFallbackTone() {
+function playChimeOnce(type: RequestItem["type"]) {
   const AudioContextClass =
     window.AudioContext ||
     (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -27,33 +24,41 @@ function playFallbackTone() {
   if (!AudioContextClass) return;
 
   const context = new AudioContextClass();
-  const gain = context.createGain();
-  const oscillator = context.createOscillator();
+  const master = context.createGain();
+  const compressor = context.createDynamicsCompressor();
+  const frequencies = type === "request_bill"
+    ? [642.58, 809.6, 962.78]
+    : [698.46, 880, 1046.5];
 
-  oscillator.type = "square";
-  oscillator.frequency.value = 1046;
-  gain.gain.setValueAtTime(0.32, context.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.75);
+  master.gain.setValueAtTime(0.95, context.currentTime);
+  master.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 1.5);
 
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  oscillator.start();
-  oscillator.stop(context.currentTime + 0.75);
+  compressor.threshold.value = -18;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 5;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.2;
+
+  master.connect(compressor);
+  compressor.connect(context.destination);
+
+  for (const frequency of frequencies) {
+    const oscillator = context.createOscillator();
+    const voiceGain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    voiceGain.gain.value = 0.38;
+
+    oscillator.connect(voiceGain);
+    voiceGain.connect(master);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 1.5);
+  }
 
   window.setTimeout(() => {
     void context.close();
-  }, 900);
-}
-
-function playChimeOnce(type: RequestItem["type"]) {
-  const audio = new Audio(CHIME_URL);
-  audio.volume = 1;
-  audio.preload = "auto";
-  audio.playbackRate = type === "request_bill" ? 0.92 : 1;
-
-  void audio.play().catch(() => {
-    playFallbackTone();
-  });
+  }, 1650);
 }
 
 function playTone(type: RequestItem["type"]) {
