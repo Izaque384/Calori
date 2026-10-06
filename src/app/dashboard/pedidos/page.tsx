@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { orderItemOptions, orderItems, orders, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { signOut } from "../actions";
 import { advanceOrder, cancelOrder } from "./actions";
 import OrdersMonitor from "./orders-monitor";
@@ -54,32 +54,38 @@ export default async function OrdersPage() {
     .from(orders)
     .innerJoin(tables, eq(orders.tableId, tables.id))
     .where(eq(orders.restaurantId, restaurant.id))
-    .orderBy(desc(orders.createdAt));
+    .orderBy(desc(orders.createdAt))
+    .limit(100);
 
-  const itemRows = await db
-    .select({
-      id: orderItems.id,
-      orderId: orderItems.orderId,
-      productName: orderItems.productName,
-      quantity: orderItems.quantity,
-      note: orderItems.note,
-    })
-    .from(orderItems)
-    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(eq(orders.restaurantId, restaurant.id))
-    .orderBy(asc(orderItems.productName));
+  const visibleOrderIds = orderRows.map((order) => order.id);
 
-  const optionRows = await db
-    .select({
-      orderItemId: orderItemOptions.orderItemId,
-      name: orderItemOptions.name,
-      price: orderItemOptions.price,
-    })
-    .from(orderItemOptions)
-    .innerJoin(orderItems, eq(orderItemOptions.orderItemId, orderItems.id))
-    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(eq(orders.restaurantId, restaurant.id))
-    .orderBy(asc(orderItemOptions.name));
+  const itemRows = visibleOrderIds.length
+    ? await db
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productName: orderItems.productName,
+          quantity: orderItems.quantity,
+          note: orderItems.note,
+        })
+        .from(orderItems)
+        .where(inArray(orderItems.orderId, visibleOrderIds))
+        .orderBy(asc(orderItems.productName))
+    : [];
+
+  const visibleItemIds = itemRows.map((item) => item.id);
+
+  const optionRows = visibleItemIds.length
+    ? await db
+        .select({
+          orderItemId: orderItemOptions.orderItemId,
+          name: orderItemOptions.name,
+          price: orderItemOptions.price,
+        })
+        .from(orderItemOptions)
+        .where(inArray(orderItemOptions.orderItemId, visibleItemIds))
+        .orderBy(asc(orderItemOptions.name))
+    : [];
 
   const optionsByItem = new Map<string, Array<{ name: string; price: string }>>();
   for (const option of optionRows) {
@@ -142,7 +148,7 @@ export default async function OrdersPage() {
         </div>
 
         <OrdersMonitor
-          initialOrders={orderRows.slice(0, 100).map((order) => ({
+          initialOrders={orderRows.map((order) => ({
             id: order.id,
             number: order.number,
             status: order.status,
