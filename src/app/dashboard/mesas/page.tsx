@@ -101,6 +101,7 @@ export default async function TablesPage() {
           {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a className="active" href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
+          {role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
           {role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
           {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
