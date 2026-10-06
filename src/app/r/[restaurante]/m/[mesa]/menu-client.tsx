@@ -25,6 +25,7 @@ type ProductItem = {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  featured: boolean;
   price: number;
 };
 
@@ -114,6 +115,7 @@ export default function PublicMenuClient({
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const featuredProducts = products.filter((product) => product.featured);
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
 
@@ -406,6 +408,35 @@ export default function PublicMenuClient({
   return (
     <>
       <section className="public-menu-sections">
+        {featuredProducts.length > 0 && (
+          <section className="public-category public-featured-section">
+            <div className="public-category-heading">
+              <span>Destaques</span>
+              <small>Escolhas da casa</small>
+            </div>
+            <div className="public-featured-grid">
+              {featuredProducts.map((product) => (
+                <button
+                  className="public-product-card product-button featured-product-card"
+                  type="button"
+                  key={`featured-${product.id}`}
+                  onClick={() => openProduct(product)}
+                >
+                  {product.imageUrl && (
+                    <img className="public-product-image" src={product.imageUrl} alt={product.name} />
+                  )}
+                  <div>
+                    <span className="featured-badge">Destaque</span>
+                    <h2>{product.name}</h2>
+                    {product.description && <p>{product.description}</p>}
+                  </div>
+                  <strong>{formatMoney(product.price)}</strong>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {categories.map((category) => {
           const items = products.filter((product) => product.categoryId === category.id);
           if (!items.length) return null;
@@ -442,6 +473,9 @@ export default function PublicMenuClient({
             <div className="public-product-list">
               {products.filter((product) => !product.categoryId).map((product) => (
                 <button className="public-product-card product-button" type="button" key={product.id} onClick={() => openProduct(product)}>
+                  {product.imageUrl && (
+                    <img className="public-product-image" src={product.imageUrl} alt={product.name} />
+                  )}
                   <div>
                     <h2>{product.name}</h2>
                     {product.description && <p>{product.description}</p>}
