@@ -118,6 +118,7 @@ export default function PublicMenuClient({
   const featuredProducts = products.filter((product) => product.featured);
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
+  const cartStorageKey = `calori-cart:${restaurantSlug}:${tableCode}`;
 
   async function createTableSession() {
     const response = await fetch("/api/public/session", {
@@ -162,6 +163,39 @@ export default function PublicMenuClient({
       setSessionToken(stored);
     }
   }, [tableSessionKey]);
+
+  useEffect(() => {
+    const storedCart = window.localStorage.getItem(cartStorageKey);
+    if (!storedCart) return;
+
+    try {
+      const parsed = JSON.parse(storedCart) as CartItem[];
+      if (Array.isArray(parsed)) {
+        setCart(
+          parsed.filter(
+            (item) =>
+              item &&
+              typeof item.key === "string" &&
+              typeof item.productId === "string" &&
+              typeof item.name === "string" &&
+              typeof item.quantity === "number" &&
+              typeof item.unitPrice === "number",
+          ),
+        );
+      }
+    } catch {
+      window.localStorage.removeItem(cartStorageKey);
+    }
+  }, [cartStorageKey]);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      window.localStorage.removeItem(cartStorageKey);
+      return;
+    }
+
+    window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  }, [cart, cartStorageKey]);
 
   function openProduct(product: ProductItem) {
     setActiveProduct(product);
@@ -382,6 +416,7 @@ export default function PublicMenuClient({
         table: data.order.table,
       });
       setCart([]);
+      window.localStorage.removeItem(cartStorageKey);
       setCartOpen(false);
     } catch {
       setError("Não conseguimos enviar seu pedido. Verifique sua conexão e tente novamente.");
