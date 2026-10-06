@@ -150,6 +150,7 @@ export default async function PublicMenuPage({ params }: Props) {
             name: product.name,
             description: product.description,
             imageUrl: product.imageUrl,
+            featured: product.featured,
             price: Number(product.price),
           }))}
           optionGroups={groups}
