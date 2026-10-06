@@ -3,12 +3,14 @@
 import { db } from "@/db";
 import { serviceRequests, tableSessions, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { assertPermission, canManageTables } from "@/lib/permissions";
 import { and, eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 export async function createTable(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageTables(role));
   const name = String(formData.get("name") ?? "").trim();
 
   if (!name) return;
@@ -39,7 +41,8 @@ export async function createTable(formData: FormData) {
 }
 
 export async function toggleTable(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageTables(role));
   const tableId = String(formData.get("tableId") ?? "");
   const active = String(formData.get("active") ?? "") === "true";
 
@@ -55,7 +58,8 @@ export async function toggleTable(formData: FormData) {
 
 
 export async function closeTableVisit(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageTables(role));
   const tableId = String(formData.get("tableId") ?? "");
 
   if (!tableId) return;
