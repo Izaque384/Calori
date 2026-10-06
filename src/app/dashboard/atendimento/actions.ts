@@ -3,11 +3,13 @@
 import { db } from "@/db";
 import { serviceRequests, tableSessions } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { assertPermission, canOperate } from "@/lib/permissions";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function handleServiceRequest(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canOperate(role));
   const requestId = String(formData.get("requestId") ?? "");
 
   if (!requestId) return;
@@ -64,7 +66,8 @@ export async function handleServiceRequest(formData: FormData) {
 }
 
 export async function cancelServiceRequest(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canOperate(role));
   const requestId = String(formData.get("requestId") ?? "");
 
   if (!requestId) return;
