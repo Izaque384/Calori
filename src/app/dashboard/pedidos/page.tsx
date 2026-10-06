@@ -38,7 +38,7 @@ const columns = [
 ] as const;
 
 export default async function OrdersPage() {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
 
   const orderRows = await db
     .select({
@@ -121,10 +121,10 @@ export default async function OrdersPage() {
         <nav>
           <a href="/dashboard">Visão geral</a>
           <a className="active" href="/dashboard/pedidos">Pedidos</a>
-          <a href="/dashboard/cardapio">Cardápio</a>
+          {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
+          {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
