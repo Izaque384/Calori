@@ -20,43 +20,6 @@ function appUrl() {
   return (process.env.NEXT_PUBLIC_APP_URL || "https://calorixx.vercel.app").replace(/\/$/, "");
 }
 
-async function sendInviteEmail(params: {
-  email: string;
-  restaurantName: string;
-  role: "manager" | "staff";
-  inviteUrl: string;
-}) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-
-  if (!apiKey || !from) return false;
-
-  const roleLabel = params.role === "manager" ? "gerente" : "equipe";
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [params.email],
-      subject: `Convite para acessar ${params.restaurantName} no Calori`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1f1f">
-          <h1 style="font-family:Georgia,serif">Você foi convidado para o Calori.</h1>
-          <p>Você recebeu acesso como <strong>${roleLabel}</strong> de <strong>${params.restaurantName}</strong>.</p>
-          <p><a href="${params.inviteUrl}" style="display:inline-block;background:#c75a3a;color:white;text-decoration:none;padding:12px 18px;border-radius:10px">Aceitar convite</a></p>
-          <p style="font-size:12px;color:#666">Este convite expira em 7 dias.</p>
-        </div>
-      `,
-    }),
-  });
-
-  return response.ok;
-}
-
 export async function createTeamInvite(
   _prevState: InviteState,
   formData: FormData,
@@ -125,21 +88,13 @@ export async function createTeamInvite(
   });
 
   const inviteUrl = `${appUrl()}/convite/${token}`;
-  const emailSent = await sendInviteEmail({
-    email,
-    restaurantName: restaurant.name,
-    role: invitedRole,
-    inviteUrl,
-  });
 
   revalidatePath("/dashboard/equipe");
 
   return {
-    success: emailSent
-      ? "Convite enviado por e-mail."
-      : "Convite criado. O envio de e-mail ainda não está configurado; copie o link abaixo.",
+    success: "Convite criado. Copie o link e envie para a pessoa convidada.",
     inviteUrl,
-    emailSent,
+    emailSent: false,
   };
 }
 
