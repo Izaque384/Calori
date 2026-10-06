@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/auth/sign-in");
 
   const [membership] = await db
-    .select({ restaurantId: restaurantMembers.restaurantId })
+    .select({ restaurantId: restaurantMembers.restaurantId, role: restaurantMembers.role })
     .from(restaurantMembers)
     .where(eq(restaurantMembers.userId, session.user.id))
     .limit(1);
@@ -88,10 +88,10 @@ export default async function DashboardPage() {
         <nav>
           <a className="active" href="/dashboard">Visão geral</a>
           <a href="/dashboard/pedidos">Pedidos</a>
-          <a href="/dashboard/cardapio">Cardápio</a>
+          {membership.role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
+          {membership.role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
