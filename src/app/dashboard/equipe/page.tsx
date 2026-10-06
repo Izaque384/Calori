@@ -1,7 +1,6 @@
 import { db } from "@/db";
 import { restaurantMembers, teamInvites } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { ensureTeamSchema } from "@/lib/team-invites";
 import { and, desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { signOut } from "../actions";
@@ -19,8 +18,6 @@ function roleLabel(role: string) {
 export default async function TeamPage() {
   const { session, restaurant, role } = await requireCurrentRestaurant();
   if (role !== "owner") redirect("/dashboard");
-
-  await ensureTeamSchema();
 
   await db
     .update(restaurantMembers)
