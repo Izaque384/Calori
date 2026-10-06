@@ -124,6 +124,7 @@ export default async function OrdersPage() {
           {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
+          {role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
           {role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
           {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
