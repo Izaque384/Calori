@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { asc, eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { signOut } from "../actions";
 import {
   createCategory,
@@ -24,7 +25,9 @@ function formatMoney(value: string) {
 }
 
 export default async function MenuPage() {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+
+  if (role === "staff") redirect("/dashboard/pedidos");
 
   const [categoryRows, productRows, groupRows, optionRows] = await Promise.all([
     db
@@ -63,11 +66,11 @@ export default async function MenuPage() {
         <div className="restaurant-pill">{restaurant.name}</div>
         <nav>
           <a href="/dashboard">Visão geral</a>
-          <span>Pedidos</span>
+          <a href="/dashboard/pedidos">Pedidos</a>
           <a className="active" href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
+          {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}>
           <button className="ghost-button" type="submit">Sair</button>
