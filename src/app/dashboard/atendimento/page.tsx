@@ -19,7 +19,7 @@ function statusLabel(status: string) {
 }
 
 export default async function ServicePage() {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
 
   const rows = await db
     .select({
@@ -106,10 +106,10 @@ export default async function ServicePage() {
         <nav>
           <a href="/dashboard">Visão geral</a>
           <a href="/dashboard/pedidos">Pedidos</a>
-          <a href="/dashboard/cardapio">Cardápio</a>
+          {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a href="/dashboard/mesas">Mesas</a>
           <a className="active" href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
+          {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
