@@ -10,9 +10,13 @@ import {
   createOptionGroup,
   createProduct,
   deleteCategory,
+  deleteOption,
+  deleteOptionGroup,
   deleteProduct,
   toggleOptionAvailability,
   toggleProductAvailability,
+  updateCategoryName,
+  updateProductDetails,
   updateProductImage,
 } from "./actions";
 
@@ -110,7 +114,11 @@ export default async function MenuPage() {
               ) : (
                 categoryRows.map((category) => (
                   <div className="category-row" key={category.id}>
-                    <span>{category.name}</span>
+                    <form action={updateCategoryName} className="category-edit-form">
+                      <input type="hidden" name="categoryId" value={category.id} />
+                      <input name="name" defaultValue={category.name} aria-label="Nome da categoria" />
+                      <button className="secondary-button" type="submit">Salvar</button>
+                    </form>
                     <form action={deleteCategory}>
                       <input type="hidden" name="categoryId" value={category.id} />
                       <button className="text-button danger" type="submit">Excluir</button>
@@ -203,6 +211,34 @@ export default async function MenuPage() {
                       <div className="product-price">{formatMoney(product.price)}</div>
                     </div>
 
+                    <form action={updateProductDetails} className="product-edit-form">
+                      <input type="hidden" name="productId" value={product.id} />
+                      <div className="form-row">
+                        <label>
+                          Nome
+                          <input name="name" defaultValue={product.name} required />
+                        </label>
+                        <label>
+                          Preço
+                          <input name="price" defaultValue={String(product.price).replace(".", ",")} inputMode="decimal" required />
+                        </label>
+                      </div>
+                      <label>
+                        Categoria
+                        <select name="categoryId" defaultValue={product.categoryId ?? ""}>
+                          <option value="">Sem categoria</option>
+                          {categoryRows.map((category) => (
+                            <option key={category.id} value={category.id}>{category.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Descrição
+                        <textarea name="description" rows={2} defaultValue={product.description ?? ""} />
+                      </label>
+                      <button className="secondary-button" type="submit">Salvar alterações</button>
+                    </form>
+
                     <form action={updateProductImage} className="product-image-form">
                       <input type="hidden" name="productId" value={product.id} />
                       <input
@@ -254,8 +290,14 @@ export default async function MenuPage() {
                             return (
                               <div className="option-group" key={group.id}>
                                 <div className="option-group-title">
-                                  <strong>{group.name}</strong>
-                                  <span>{group.required ? "Obrigatório" : "Opcional"} · até {group.maxSelections}</span>
+                                  <div>
+                                    <strong>{group.name}</strong>
+                                    <span>{group.required ? "Obrigatório" : "Opcional"} · até {group.maxSelections}</span>
+                                  </div>
+                                  <form action={deleteOptionGroup}>
+                                    <input type="hidden" name="groupId" value={group.id} />
+                                    <button className="text-button danger" type="submit">Excluir grupo</button>
+                                  </form>
                                 </div>
 
                                 <div className="option-list">
@@ -265,13 +307,19 @@ export default async function MenuPage() {
                                         <span>{option.name}</span>
                                         <small>+ {formatMoney(option.additionalPrice)}</small>
                                       </div>
-                                      <form action={toggleOptionAvailability}>
-                                        <input type="hidden" name="optionId" value={option.id} />
-                                        <input type="hidden" name="available" value={String(option.available)} />
-                                        <button className={option.available ? "mini-status on" : "mini-status off"} type="submit">
-                                          {option.available ? "Ativo" : "Pausado"}
-                                        </button>
-                                      </form>
+                                      <div className="option-row-actions">
+                                        <form action={toggleOptionAvailability}>
+                                          <input type="hidden" name="optionId" value={option.id} />
+                                          <input type="hidden" name="available" value={String(option.available)} />
+                                          <button className={option.available ? "mini-status on" : "mini-status off"} type="submit">
+                                            {option.available ? "Ativo" : "Pausado"}
+                                          </button>
+                                        </form>
+                                        <form action={deleteOption}>
+                                          <input type="hidden" name="optionId" value={option.id} />
+                                          <button className="text-button danger" type="submit">Excluir</button>
+                                        </form>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
