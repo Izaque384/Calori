@@ -151,12 +151,6 @@ export default function PublicMenuClient({
     return createTableSession();
   }
 
-  async function renewTableSession() {
-    window.localStorage.removeItem(tableSessionKey);
-    setSessionToken(null);
-    return createTableSession();
-  }
-
   useEffect(() => {
     const stored = window.localStorage.getItem(tableSessionKey);
     if (stored) {
@@ -289,11 +283,11 @@ export default function PublicMenuClient({
       });
 
       if (response.status === 401) {
-        const freshToken = await renewTableSession();
-        params.set("sessionToken", freshToken);
-        response = await fetch(`/api/public/bill?${params.toString()}`, {
-          cache: "no-store",
-        });
+        window.localStorage.removeItem(tableSessionKey);
+        setSessionToken(null);
+        setBillError("Esta visita já foi encerrada. Reabra o cardápio pelo QR Code para iniciar uma nova sessão.");
+        setBillOpen(true);
+        return;
       }
 
       const data = await response.json();
@@ -335,17 +329,10 @@ export default function PublicMenuClient({
       });
 
       if (response.status === 401) {
-        const freshToken = await renewTableSession();
-        response = await fetch("/api/public/service", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            restaurantSlug,
-            tableCode,
-            sessionToken: freshToken,
-            type,
-          }),
-        });
+        window.localStorage.removeItem(tableSessionKey);
+        setSessionToken(null);
+        setServiceMessage("Esta visita já foi encerrada. Reabra o cardápio pelo QR Code para iniciar uma nova sessão.");
+        return;
       }
 
       const data = await response.json();
@@ -385,22 +372,12 @@ export default function PublicMenuClient({
       });
 
       if (response.status === 401) {
-        const freshToken = await renewTableSession();
-        response = await fetch("/api/public/orders", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            restaurantSlug,
-            tableCode,
-            sessionToken: freshToken,
-            items: cart.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              optionIds: item.optionIds,
-              note: item.note,
-            })),
-          }),
-        });
+        window.localStorage.removeItem(tableSessionKey);
+        window.localStorage.removeItem(cartStorageKey);
+        setSessionToken(null);
+        setCart([]);
+        setError("Esta visita já foi encerrada. Reabra o cardápio pelo QR Code antes de fazer um novo pedido.");
+        return;
       }
 
       const data = await response.json();
