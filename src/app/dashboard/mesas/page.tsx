@@ -16,7 +16,8 @@ function formatMoney(value: number) {
 }
 
 export default async function TablesPage() {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  const canManage = role === "owner" || role === "manager";
 
   const rows = await db
     .select()
@@ -97,10 +98,10 @@ export default async function TablesPage() {
         <nav>
           <a href="/dashboard">Visão geral</a>
           <a href="/dashboard/pedidos">Pedidos</a>
-          <a href="/dashboard/cardapio">Cardápio</a>
+          {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a className="active" href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
+          {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
       </aside>
@@ -115,18 +116,20 @@ export default async function TablesPage() {
           <div className="status-chip">{occupiedCount} {occupiedCount === 1 ? "ocupada" : "ocupadas"}</div>
         </div>
 
-        <section className="panel-card tables-create-card">
-          <div className="section-title">
-            <div>
-              <span className="section-kicker">Nova mesa</span>
-              <h2>Adicionar mesa</h2>
+        {canManage && (
+          <section className="panel-card tables-create-card">
+            <div className="section-title">
+              <div>
+                <span className="section-kicker">Nova mesa</span>
+                <h2>Adicionar mesa</h2>
+              </div>
             </div>
-          </div>
-          <form action={createTable} className="inline-form">
-            <input name="name" required placeholder="Ex.: Mesa 1, Varanda 2..." />
-            <button className="primary-button compact" type="submit">Criar mesa</button>
-          </form>
-        </section>
+            <form action={createTable} className="inline-form">
+              <input name="name" required placeholder="Ex.: Mesa 1, Varanda 2..." />
+              <button className="primary-button compact" type="submit">Criar mesa</button>
+            </form>
+          </section>
+        )}
 
         <section className="products-section">
           <div className="section-title">
@@ -197,20 +200,26 @@ export default async function TablesPage() {
                       <Link className="secondary-link-button" href={`/dashboard/mesas/${table.id}/qr`}>Ver QR Code</Link>
                       <Link className="text-link-button" href={`/r/${restaurant.slug}/m/${table.publicCode}`} target="_blank">Abrir cardápio</Link>
 
-                      {operation.occupied && (
+                      {canManage && operation.occupied && (
                         <form action={closeTableVisit}>
                           <input type="hidden" name="tableId" value={table.id} />
                           <button className="text-button danger" type="submit">Encerrar visita</button>
                         </form>
                       )}
 
-                      <form action={toggleTable}>
-                        <input type="hidden" name="tableId" value={table.id} />
-                        <input type="hidden" name="active" value={String(table.active)} />
-                        <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
+                      {canManage ? (
+                        <form action={toggleTable}>
+                          <input type="hidden" name="tableId" value={table.id} />
+                          <input type="hidden" name="active" value={String(table.active)} />
+                          <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
+                            {table.active ? "Ativa" : "Pausada"}
+                          </button>
+                        </form>
+                      ) : (
+                        <span className={table.active ? "availability-button on" : "availability-button off"}>
                           {table.active ? "Ativa" : "Pausada"}
-                        </button>
-                      </form>
+                        </span>
+                      )}
                     </div>
                   </article>
                 );
