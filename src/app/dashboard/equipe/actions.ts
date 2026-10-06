@@ -124,6 +124,19 @@ export async function updateMemberRole(formData: FormData) {
 
   if (!userId || !["manager", "staff"].includes(nextRole)) return;
 
+  const [member] = await db
+    .select({ role: restaurantMembers.role })
+    .from(restaurantMembers)
+    .where(
+      and(
+        eq(restaurantMembers.restaurantId, restaurant.id),
+        eq(restaurantMembers.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (!member || member.role === "owner") return;
+
   await db
     .update(restaurantMembers)
     .set({ role: nextRole })
