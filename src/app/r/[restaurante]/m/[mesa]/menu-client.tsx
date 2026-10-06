@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import OrderStatusCard from "./order-status-card";
 
 type OptionItem = {
   id: string;
@@ -76,7 +77,7 @@ export default function PublicMenuClient({
   const [cartOpen, setCartOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [order, setOrder] = useState<{ number: number; total: number; table: string } | null>(null);
+  const [order, setOrder] = useState<{ id: string; number: number; total: number; table: string } | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
@@ -388,6 +389,7 @@ export default function PublicMenuClient({
       }
 
       setOrder({
+        id: data.order.id,
         number: data.order.number,
         total: data.order.total,
         table: data.order.table,
@@ -404,16 +406,15 @@ export default function PublicMenuClient({
 
   if (order) {
     return (
-      <section className="public-order-success">
-        <span className="success-mark">✓</span>
-        <p className="section-kicker">Pedido enviado</p>
-        <h2>Pedido #{order.number}</h2>
-        <p>A cozinha já recebeu sua solicitação para {order.table}.</p>
-        <strong>{formatMoney(order.total)}</strong>
-        <button className="primary-button" type="button" onClick={() => setOrder(null)}>
-          Voltar ao cardápio
-        </button>
-      </section>
+      <OrderStatusCard
+        orderId={order.id}
+        number={order.number}
+        total={order.total}
+        table={order.table}
+        restaurantSlug={restaurantSlug}
+        tableCode={tableCode}
+        onFinish={() => setOrder(null)}
+      />
     );
   }
 
