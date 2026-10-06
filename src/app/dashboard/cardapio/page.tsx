@@ -13,8 +13,10 @@ import {
   deleteOption,
   deleteOptionGroup,
   deleteProduct,
+  toggleCategoryActive,
   toggleOptionAvailability,
   toggleProductAvailability,
+  toggleProductFeatured,
   updateCategoryName,
   updateProductDetails,
   updateProductImage,
@@ -119,10 +121,19 @@ export default async function MenuPage() {
                       <input name="name" defaultValue={category.name} aria-label="Nome da categoria" />
                       <button className="secondary-button" type="submit">Salvar</button>
                     </form>
-                    <form action={deleteCategory}>
-                      <input type="hidden" name="categoryId" value={category.id} />
-                      <button className="text-button danger" type="submit">Excluir</button>
-                    </form>
+                    <div className="category-row-actions">
+                      <form action={toggleCategoryActive}>
+                        <input type="hidden" name="categoryId" value={category.id} />
+                        <input type="hidden" name="active" value={String(category.active)} />
+                        <button className={category.active ? "mini-status on" : "mini-status off"} type="submit">
+                          {category.active ? "Ativa" : "Pausada"}
+                        </button>
+                      </form>
+                      <form action={deleteCategory}>
+                        <input type="hidden" name="categoryId" value={category.id} />
+                        <button className="text-button danger" type="submit">Excluir</button>
+                      </form>
+                    </div>
                   </div>
                 ))
               )}
@@ -251,6 +262,13 @@ export default async function MenuPage() {
                     </form>
 
                     <div className="product-actions">
+                      <form action={toggleProductFeatured}>
+                        <input type="hidden" name="productId" value={product.id} />
+                        <input type="hidden" name="featured" value={String(product.featured)} />
+                        <button className={product.featured ? "availability-button on" : "availability-button off"} type="submit">
+                          {product.featured ? "Em destaque" : "Destacar"}
+                        </button>
+                      </form>
                       <form action={toggleProductAvailability}>
                         <input type="hidden" name="productId" value={product.id} />
                         <input type="hidden" name="available" value={String(product.available)} />
