@@ -142,7 +142,7 @@ export default async function OrdersPage() {
         </div>
 
         <OrdersMonitor
-          initialOrders={orderRows.map((order) => ({
+          initialOrders={orderRows.slice(0, 100).map((order) => ({
             id: order.id,
             number: order.number,
             status: order.status,
