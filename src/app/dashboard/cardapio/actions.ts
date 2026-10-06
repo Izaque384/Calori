@@ -7,6 +7,21 @@ import { assertPermission, canManageCatalog } from "@/lib/permissions";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+function normalizeImageUrl(value: FormDataEntryValue | null) {
+  const imageUrl = String(value ?? "").trim().slice(0, 500);
+  if (!imageUrl) return null;
+
+  try {
+    const parsed = new URL(imageUrl);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error();
+    }
+    return parsed.toString();
+  } catch {
+    throw new Error("URL da imagem inválida");
+  }
+}
+
 function moneyToDatabase(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "")
     .trim()
@@ -86,6 +101,7 @@ export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const categoryId = String(formData.get("categoryId") ?? "").trim();
+  const imageUrl = normalizeImageUrl(formData.get("imageUrl"));
   const price = moneyToDatabase(formData.get("price"));
 
   if (!name) return;
@@ -99,6 +115,7 @@ export async function createProduct(formData: FormData) {
     categoryId: categoryId || null,
     name,
     description: description || null,
+    imageUrl,
     price,
     available: true,
   });
@@ -209,6 +226,24 @@ export async function toggleOptionAvailability(formData: FormData) {
     .update(options)
     .set({ available: !available })
     .where(eq(options.id, optionId));
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+
+export async function updateProductImage(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const productId = String(formData.get("productId") ?? "");
+  const imageUrl = normalizeImageUrl(formData.get("imageUrl"));
+
+  if (!productId || !(await assertProductOwnership(productId, restaurant.id))) return;
+
+  await db
+    .update(products)
+    .set({ imageUrl, updatedAt: new Date() })
+    .where(and(eq(products.id, productId), eq(products.restaurantId, restaurant.id)));
 
   revalidatePath("/dashboard/cardapio");
 }
