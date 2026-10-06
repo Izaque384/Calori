@@ -76,6 +76,7 @@ export default async function TeamPage() {
           <a href="/dashboard/cardapio">Cardápio</a>
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
+          <a href="/dashboard/relatorios">Relatórios</a>
           <a className="active" href="/dashboard/equipe">Equipe</a>
           <a href="/dashboard/configuracoes">Configurações</a>
         </nav>
