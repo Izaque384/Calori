@@ -21,7 +21,7 @@ export default function InviteForm() {
           </select>
         </label>
         <button className="primary-button" type="submit" disabled={pending}>
-          {pending ? "Criando convite..." : "Enviar convite"}
+          {pending ? "Gerando convite..." : "Gerar convite"}
         </button>
       </form>
 
