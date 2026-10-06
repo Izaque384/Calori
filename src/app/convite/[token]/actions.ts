@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { restaurantMembers, teamInvites } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { ensureTeamSchema, hashInviteToken } from "@/lib/team-invites";
+import { hashInviteToken } from "@/lib/team-invites";
 import { and, eq, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -13,8 +13,6 @@ export async function acceptTeamInvite(formData: FormData) {
 
   const { data: session } = await auth.getSession();
   if (!session?.user) redirect("/auth/sign-in");
-
-  await ensureTeamSchema();
 
   const [invite] = await db
     .select({
