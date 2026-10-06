@@ -13,6 +13,7 @@ import {
   deleteProduct,
   toggleOptionAvailability,
   toggleProductAvailability,
+  updateProductImage,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -156,6 +157,11 @@ export default async function MenuPage() {
                 <textarea name="description" rows={3} placeholder="Descreva ingredientes, preparo ou destaque do prato." />
               </label>
 
+              <label>
+                URL da imagem
+                <input name="imageUrl" type="url" placeholder="https://..." />
+              </label>
+
               <button className="primary-button" type="submit">Adicionar ao cardápio</button>
             </form>
           </article>
@@ -182,6 +188,13 @@ export default async function MenuPage() {
                 return (
                   <article className="product-card" key={product.id}>
                     <div className="product-topline">
+                      {product.imageUrl && (
+                        <img
+                          className="dashboard-product-image"
+                          src={product.imageUrl}
+                          alt={product.name}
+                        />
+                      )}
                       <div>
                         <span className="product-category">{product.categoryId ? categoryName.get(product.categoryId) ?? "Categoria" : "Sem categoria"}</span>
                         <h3>{product.name}</h3>
@@ -189,6 +202,17 @@ export default async function MenuPage() {
                       </div>
                       <div className="product-price">{formatMoney(product.price)}</div>
                     </div>
+
+                    <form action={updateProductImage} className="product-image-form">
+                      <input type="hidden" name="productId" value={product.id} />
+                      <input
+                        name="imageUrl"
+                        type="url"
+                        defaultValue={product.imageUrl ?? ""}
+                        placeholder="URL da imagem"
+                      />
+                      <button className="secondary-button" type="submit">Salvar imagem</button>
+                    </form>
 
                     <div className="product-actions">
                       <form action={toggleProductAvailability}>
