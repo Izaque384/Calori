@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { restaurants, teamInvites } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { ensureTeamSchema, hashInviteToken } from "@/lib/team-invites";
+import { hashInviteToken } from "@/lib/team-invites";
 import { and, eq, gt } from "drizzle-orm";
 import Link from "next/link";
 import { acceptTeamInvite } from "./actions";
@@ -16,8 +16,6 @@ type Props = {
 export default async function InvitePage({ params, searchParams }: Props) {
   const { token } = await params;
   const query = await searchParams;
-
-  await ensureTeamSchema();
 
   const [invite] = await db
     .select({
