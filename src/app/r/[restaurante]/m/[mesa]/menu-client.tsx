@@ -120,6 +120,7 @@ export default function PublicMenuClient({
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
   const cartStorageKey = `calori-cart:${restaurantSlug}:${tableCode}`;
+  const activeOrderStorageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
 
   async function createTableSession() {
     const response = await fetch("/api/public/session", {
@@ -191,6 +192,38 @@ export default function PublicMenuClient({
 
     window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
   }, [cart, cartStorageKey]);
+
+  useEffect(() => {
+    const storedOrder = window.localStorage.getItem(activeOrderStorageKey);
+    if (!storedOrder) return;
+
+    try {
+      const parsed = JSON.parse(storedOrder) as {
+        id?: unknown;
+        number?: unknown;
+        total?: unknown;
+        table?: unknown;
+      };
+
+      if (
+        typeof parsed.id === "string" &&
+        typeof parsed.number === "number" &&
+        typeof parsed.total === "number" &&
+        typeof parsed.table === "string"
+      ) {
+        setOrder({
+          id: parsed.id,
+          number: parsed.number,
+          total: parsed.total,
+          table: parsed.table,
+        });
+      } else {
+        window.localStorage.removeItem(activeOrderStorageKey);
+      }
+    } catch {
+      window.localStorage.removeItem(activeOrderStorageKey);
+    }
+  }, [activeOrderStorageKey]);
 
   function openProduct(product: ProductItem) {
     setActiveProduct(product);
@@ -388,12 +421,15 @@ export default function PublicMenuClient({
         return;
       }
 
-      setOrder({
+      const activeOrder = {
         id: data.order.id,
         number: data.order.number,
         total: data.order.total,
         table: data.order.table,
-      });
+      };
+
+      setOrder(activeOrder);
+      window.localStorage.setItem(activeOrderStorageKey, JSON.stringify(activeOrder));
       setCart([]);
       window.localStorage.removeItem(cartStorageKey);
       setCartOpen(false);
@@ -413,7 +449,10 @@ export default function PublicMenuClient({
         table={order.table}
         restaurantSlug={restaurantSlug}
         tableCode={tableCode}
-        onFinish={() => setOrder(null)}
+        onFinish={() => {
+          window.localStorage.removeItem(activeOrderStorageKey);
+          setOrder(null);
+        }}
       />
     );
   }
