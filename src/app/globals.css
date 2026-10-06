@@ -432,3 +432,16 @@ button, input { font: inherit; }
   .table-operation-summary { grid-template-columns: 1fr 1fr; }
   .table-operation-summary > div:first-child { grid-column: 1 / -1; }
 }
+
+
+/* Imagens de produto */
+.dashboard-product-image { width: 92px; height: 92px; border-radius: 16px; object-fit: cover; flex: 0 0 auto; border: 1px solid #eaded2; background: #f7efe7; }
+.product-image-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 12px 0 4px; }
+.product-image-form input { min-width: 0; border: 1px solid #d9cbbc; background: #fffdf9; border-radius: 11px; padding: 10px 11px; font: inherit; }
+.public-product-card { align-items: center; }
+.public-product-image { width: 82px; height: 82px; border-radius: 14px; object-fit: cover; flex: 0 0 auto; background: #f7efe7; }
+@media (max-width: 560px) {
+  .dashboard-product-image { width: 72px; height: 72px; }
+  .product-image-form { grid-template-columns: 1fr; }
+  .public-product-image { width: 70px; height: 70px; }
+}
