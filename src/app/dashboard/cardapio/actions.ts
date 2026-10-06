@@ -335,3 +335,38 @@ export async function deleteOption(formData: FormData) {
   await db.delete(options).where(eq(options.id, optionId));
   revalidatePath("/dashboard/cardapio");
 }
+
+
+export async function toggleCategoryActive(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const active = String(formData.get("active") ?? "") === "true";
+
+  if (!categoryId || !(await assertCategoryOwnership(categoryId, restaurant.id))) return;
+
+  await db
+    .update(categories)
+    .set({ active: !active })
+    .where(and(eq(categories.id, categoryId), eq(categories.restaurantId, restaurant.id)));
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+export async function toggleProductFeatured(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const productId = String(formData.get("productId") ?? "");
+  const featured = String(formData.get("featured") ?? "") === "true";
+
+  if (!productId || !(await assertProductOwnership(productId, restaurant.id))) return;
+
+  await db
+    .update(products)
+    .set({ featured: !featured, updatedAt: new Date() })
+    .where(and(eq(products.id, productId), eq(products.restaurantId, restaurant.id)));
+
+  revalidatePath("/dashboard/cardapio");
+}
