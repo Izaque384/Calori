@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { assertPermission, canOperate } from "@/lib/permissions";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -13,7 +14,8 @@ const nextStatus: Record<string, "preparing" | "ready" | "delivered"> = {
 };
 
 export async function advanceOrder(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canOperate(role));
   const orderId = String(formData.get("orderId") ?? "");
 
   if (!orderId) return;
@@ -39,7 +41,8 @@ export async function advanceOrder(formData: FormData) {
 }
 
 export async function cancelOrder(formData: FormData) {
-  const { restaurant } = await requireCurrentRestaurant();
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canOperate(role));
   const orderId = String(formData.get("orderId") ?? "");
 
   if (!orderId) return;
