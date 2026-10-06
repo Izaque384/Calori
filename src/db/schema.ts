@@ -56,6 +56,8 @@ export const restaurantMembers = pgTable(
       .references(() => restaurants.id, { onDelete: "cascade" }),
     userId: text("user_id").notNull(),
     role: memberRole("role").notNull().default("staff"),
+    email: text("email"),
+    displayName: text("display_name"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
