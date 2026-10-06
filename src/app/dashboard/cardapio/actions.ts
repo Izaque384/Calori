@@ -247,3 +247,91 @@ export async function updateProductImage(formData: FormData) {
 
   revalidatePath("/dashboard/cardapio");
 }
+
+
+export async function updateCategoryName(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!categoryId || !name || !(await assertCategoryOwnership(categoryId, restaurant.id))) return;
+
+  await db
+    .update(categories)
+    .set({ name })
+    .where(and(eq(categories.id, categoryId), eq(categories.restaurantId, restaurant.id)));
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+export async function updateProductDetails(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const productId = String(formData.get("productId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const categoryId = String(formData.get("categoryId") ?? "").trim();
+  const price = moneyToDatabase(formData.get("price"));
+
+  if (!productId || !name || !(await assertProductOwnership(productId, restaurant.id))) return;
+
+  if (categoryId && !(await assertCategoryOwnership(categoryId, restaurant.id))) {
+    throw new Error("Categoria inválida");
+  }
+
+  await db
+    .update(products)
+    .set({
+      name,
+      description: description || null,
+      categoryId: categoryId || null,
+      price,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(products.id, productId), eq(products.restaurantId, restaurant.id)));
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+export async function deleteOptionGroup(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const groupId = String(formData.get("groupId") ?? "");
+
+  const [group] = await db
+    .select({ id: optionGroups.id, productId: optionGroups.productId })
+    .from(optionGroups)
+    .where(eq(optionGroups.id, groupId))
+    .limit(1);
+
+  if (!group || !(await assertProductOwnership(group.productId, restaurant.id))) return;
+
+  await db.delete(optionGroups).where(eq(optionGroups.id, group.id));
+  revalidatePath("/dashboard/cardapio");
+}
+
+export async function deleteOption(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const optionId = String(formData.get("optionId") ?? "");
+
+  const [record] = await db
+    .select({
+      optionId: options.id,
+      productId: optionGroups.productId,
+    })
+    .from(options)
+    .innerJoin(optionGroups, eq(options.groupId, optionGroups.id))
+    .where(eq(options.id, optionId))
+    .limit(1);
+
+  if (!record || !(await assertProductOwnership(record.productId, restaurant.id))) return;
+
+  await db.delete(options).where(eq(options.id, optionId));
+  revalidatePath("/dashboard/cardapio");
+}
