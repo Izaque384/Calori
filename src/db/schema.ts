@@ -64,6 +64,30 @@ export const restaurantMembers = pgTable(
   ],
 );
 
+
+export const teamInvites = pgTable(
+  "team_invites",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    restaurantId: uuid("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: memberRole("role").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    invitedByUserId: text("invited_by_user_id").notNull(),
+    status: text("status").notNull().default("pending"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("team_invites_token_hash_uq").on(table.tokenHash),
+    index("team_invites_restaurant_idx").on(table.restaurantId),
+    index("team_invites_email_idx").on(table.email),
+  ],
+);
+
 export const tables = pgTable(
   "tables",
   {
