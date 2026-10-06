@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { assertPermission, canManageSettings } from "@/lib/permissions";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -19,9 +20,7 @@ function normalizeColor(value: FormDataEntryValue | null) {
 export async function updateRestaurantSettings(formData: FormData) {
   const { restaurant, role } = await requireCurrentRestaurant();
 
-  if (role !== "owner" && role !== "manager") {
-    throw new Error("Você não tem permissão para alterar as configurações.");
-  }
+  assertPermission(canManageSettings(role));
 
   const name = String(formData.get("name") ?? "").trim().slice(0, 100);
 
