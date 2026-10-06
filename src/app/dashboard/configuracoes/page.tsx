@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { signOut } from "../actions";
 import { updateRestaurantSettings } from "./actions";
 
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const { restaurant, role } = await requireCurrentRestaurant();
+
+  if (role !== "owner") redirect("/dashboard");
 
   const [settings] = await db
     .select({
@@ -23,7 +26,7 @@ export default async function SettingsPage() {
     .where(eq(restaurants.id, restaurant.id))
     .limit(1);
 
-  const canEdit = role === "owner" || role === "manager";
+  const canEdit = true;
 
   return (
     <main className="dashboard-shell">
