@@ -91,6 +91,7 @@ export default async function DashboardPage() {
           {membership.role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
           <a href="/dashboard/mesas">Mesas</a>
           <a href="/dashboard/atendimento">Atendimento</a>
+          {membership.role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
           {membership.role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
           {membership.role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
