@@ -462,3 +462,14 @@ button, input { font: inherit; }
   .category-edit-form { grid-template-columns: 1fr; }
   .option-group-title { flex-direction: column; }
 }
+
+
+/* Categorias pausáveis e destaques */
+.category-row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.public-featured-section { margin-bottom: 28px; }
+.public-featured-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.featured-product-card { border-color: color-mix(in srgb, var(--restaurant-accent) 30%, #eaded2); background: color-mix(in srgb, var(--restaurant-accent) 5%, #fffaf2); }
+.featured-badge { display: inline-flex; width: max-content; margin-bottom: 5px; padding: 3px 7px; border-radius: 999px; background: var(--restaurant-accent); color: white; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+@media (max-width: 680px) {
+  .public-featured-grid { grid-template-columns: 1fr; }
+}
