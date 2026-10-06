@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { restaurantMembers, teamInvites } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageSettings } from "@/lib/permissions";
-import { ensureTeamSchema, hashInviteToken } from "@/lib/team-invites";
+import { hashInviteToken } from "@/lib/team-invites";
 import { and, eq, gt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -26,8 +26,6 @@ export async function createTeamInvite(
 ): Promise<InviteState> {
   const { session, restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageSettings(role));
-  await ensureTeamSchema();
-
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const invitedRole = String(formData.get("role") ?? "") as "manager" | "staff";
 
@@ -101,8 +99,6 @@ export async function createTeamInvite(
 export async function revokeTeamInvite(formData: FormData) {
   const { restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageSettings(role));
-  await ensureTeamSchema();
-
   const inviteId = String(formData.get("inviteId") ?? "");
   if (!inviteId) return;
 
@@ -123,8 +119,6 @@ export async function revokeTeamInvite(formData: FormData) {
 export async function updateMemberRole(formData: FormData) {
   const { restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageSettings(role));
-  await ensureTeamSchema();
-
   const userId = String(formData.get("userId") ?? "");
   const nextRole = String(formData.get("role") ?? "") as "manager" | "staff";
 
@@ -146,8 +140,6 @@ export async function updateMemberRole(formData: FormData) {
 export async function removeTeamMember(formData: FormData) {
   const { session, restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageSettings(role));
-  await ensureTeamSchema();
-
   const userId = String(formData.get("userId") ?? "");
   if (!userId || userId === session.user.id) return;
 
