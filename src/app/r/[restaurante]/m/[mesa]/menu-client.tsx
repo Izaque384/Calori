@@ -24,6 +24,7 @@ type ProductItem = {
   categoryId: string | null;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   price: number;
 };
 
@@ -418,6 +419,9 @@ export default function PublicMenuClient({
               <div className="public-product-list">
                 {items.map((product) => (
                   <button className="public-product-card product-button" type="button" key={product.id} onClick={() => openProduct(product)}>
+                    {product.imageUrl && (
+                      <img className="public-product-image" src={product.imageUrl} alt={product.name} />
+                    )}
                     <div>
                       <h2>{product.name}</h2>
                       {product.description && <p>{product.description}</p>}
