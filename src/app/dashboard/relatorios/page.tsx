@@ -126,9 +126,9 @@ export default async function ReportsPage() {
       <section className="dashboard-content reports-content">
         <div className="page-heading-row">
           <div>
-            <p className="eyebrow">Relatórios</p>
-            <h1>Desempenho do restaurante.</h1>
-            <p className="muted">Acompanhe volume em pedidos e itens mais vendidos. Valores representam pedidos registrados, não pagamentos recebidos.</p>
+            <p className="eyebrow">Gestão</p>
+            <h1>Entenda o ritmo do restaurante.</h1>
+            <p className="muted">Transforme a rotina do salão em sinais simples para decidir melhor. Os valores abaixo representam pedidos registrados, não pagamentos recebidos.</p>
           </div>
         </div>
 
