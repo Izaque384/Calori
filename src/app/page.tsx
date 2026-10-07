@@ -81,7 +81,7 @@ export default function Home() {
           aria-label="Mesa de restaurante elegante preparada para receber clientes"
         />
         <div className="landing-editorial-copy">
-          <span className="section-kicker">Simples, elegante e próxima</span>
+          <span className="section-kicker">Simples, elegante e próximo</span>
           <h2>Tecnologia que valoriza o que realmente importa.</h2>
           <p>
             O Calori cuida da parte digital para sua equipe focar no que faz de melhor:
@@ -116,9 +116,22 @@ export default function Home() {
         <div className="landing-phone" aria-hidden="true">
           <div className="landing-phone-top">
             <CaloriBrand compact />
-            <span>●</span>
+            <span className="landing-phone-notification" aria-label="1 notificação">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+              </svg>
+              <b>1</b>
+            </span>
           </div>
-          <div className="landing-phone-search">Buscar no cardápio...</div>
+          <label className="landing-phone-search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              placeholder="Buscar no cardápio..."
+              aria-label="Buscar no cardápio"
+              readOnly
+            />
+          </label>
           <div className="landing-phone-chips">
             <span className="active">Destaques</span>
             <span>Entradas</span>
