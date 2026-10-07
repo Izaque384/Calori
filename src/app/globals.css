@@ -873,3 +873,116 @@ button, input { font: inherit; }
   .dashboard-quick-actions a { min-height: 118px; padding: 15px; }
   .dashboard-section-heading { align-items: flex-start; flex-direction: column; }
 }
+
+
+/* UX — cardápio público */
+.public-menu-tools {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 -4px 8px;
+  padding: 10px 4px 12px;
+  background: linear-gradient(to bottom, rgba(251,246,237,.98) 76%, rgba(251,246,237,0));
+  backdrop-filter: blur(10px);
+}
+.public-search {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid #e2d6ca;
+  border-radius: 15px;
+  background: rgba(255,255,255,.84);
+  box-shadow: 0 8px 20px rgba(70,42,30,.04);
+}
+.public-search > span {
+  color: var(--restaurant-accent);
+  font-size: 21px;
+  line-height: 1;
+}
+.public-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--charcoal);
+  font: inherit;
+  font-size: 14px;
+}
+.public-search input::placeholder { color: #9c948c; }
+.public-search button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: #efe5dc;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+}
+.public-category-chips {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  margin-top: 9px;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.public-category-chips::-webkit-scrollbar { display: none; }
+.public-category-chips button {
+  flex: 0 0 auto;
+  border: 1px solid #e4d8ca;
+  border-radius: 999px;
+  background: rgba(255,250,242,.9);
+  color: var(--muted);
+  padding: 8px 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+.public-category-chips button:hover {
+  border-color: color-mix(in srgb, var(--restaurant-accent) 42%, #e4d8ca);
+  color: var(--restaurant-accent);
+}
+.public-search-result {
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.public-search-empty {
+  margin: 0;
+}
+.public-search-empty .secondary-button {
+  width: max-content;
+  margin-top: 6px;
+}
+.public-category {
+  scroll-margin-top: 118px;
+}
+@media (max-width: 620px) {
+  .public-menu-sections { padding: 0 14px; gap: 30px; }
+  .public-menu-tools { margin-left: -2px; margin-right: -2px; }
+  .public-product-card {
+    border-radius: 16px;
+    padding: 14px;
+    gap: 12px;
+  }
+  .public-product-card h2 { font-size: 18px; }
+  .public-product-card p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .public-product-card > strong { font-size: 16px; }
+  .public-product-image {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
+  }
+}
