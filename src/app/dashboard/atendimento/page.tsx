@@ -1,8 +1,8 @@
 import { db } from "@/db";
+import DashboardSidebar from "@/components/dashboard-sidebar";
 import { orders, serviceRequests, tableSessions, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { and, desc, eq, gt, inArray, ne } from "drizzle-orm";
-import { signOut } from "../actions";
 import { cancelServiceRequest, handleServiceRequest } from "./actions";
 import ServiceMonitor from "./service-monitor";
 
@@ -100,22 +100,7 @@ export default async function ServicePage() {
 
   return (
     <main className="dashboard-shell">
-      <aside className="dashboard-sidebar">
-        <div className="brand">Calori<span>.</span></div>
-        <div className="restaurant-pill">{restaurant.name}</div>
-        <nav>
-          <a href="/dashboard">Visão geral</a>
-          <a href="/dashboard/pedidos">Pedidos</a>
-          {role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
-          <a href="/dashboard/mesas">Mesas</a>
-          <a className="active" href="/dashboard/atendimento">Atendimento</a>
-          {role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
-          {role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
-          {role === "owner" && <a href="/dashboard/assinatura">Assinatura</a>}
-          {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
-        </nav>
-        <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
-      </aside>
+      <DashboardSidebar restaurantName={restaurant.name} role={role} activePath="/dashboard/atendimento" />
 
       <section className="dashboard-content menu-content">
         <div className="page-heading-row">
