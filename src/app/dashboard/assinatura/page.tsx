@@ -1,10 +1,10 @@
 import { db } from "@/db";
+import DashboardSidebar from "@/components/dashboard-sidebar";
 import { restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { formatCaloriMonthlyPrice, getSubscriptionSummary } from "@/lib/subscription";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { signOut } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -40,22 +40,7 @@ export default async function SubscriptionPage() {
 
   return (
     <main className="dashboard-shell">
-      <aside className="dashboard-sidebar">
-        <div className="brand">Calori<span>.</span></div>
-        <div className="restaurant-pill">{restaurant.name}</div>
-        <nav>
-          <a href="/dashboard">Visão geral</a>
-          <a href="/dashboard/pedidos">Pedidos</a>
-          <a href="/dashboard/cardapio">Cardápio</a>
-          <a href="/dashboard/mesas">Mesas</a>
-          <a href="/dashboard/atendimento">Atendimento</a>
-          <a href="/dashboard/relatorios">Relatórios</a>
-          <a href="/dashboard/equipe">Equipe</a>
-          <a className="active" href="/dashboard/assinatura">Assinatura</a>
-          <a href="/dashboard/configuracoes">Configurações</a>
-        </nav>
-        <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
-      </aside>
+      <DashboardSidebar restaurantName={restaurant.name} role={role} activePath="/dashboard/assinatura" />
 
       <section className="dashboard-content subscription-content">
         <div className="page-heading-row">
