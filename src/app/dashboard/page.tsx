@@ -96,9 +96,9 @@ export default async function DashboardPage() {
     <main className="dashboard-shell">
       <DashboardSidebar restaurantName={restaurant.name} role={membership.role} activePath="/dashboard" />
       <section className="dashboard-content">
-        <p className="eyebrow">Visão geral</p>
-        <h1>Olá, {session.user.name?.split(" ")[0] || "bem-vindo"}.</h1>
-        <p className="muted">Acompanhe os principais números do restaurante e acesse rapidamente a operação.</p>
+        <p className="eyebrow">Hoje no salão</p>
+        <h1>Tudo pronto para um bom serviço.</h1>
+        <p className="muted">Pedidos, mesas e atendimento organizados para sua equipe focar no que realmente importa: a experiência à mesa.</p>
         {membership.role === "owner" && restaurant.subscriptionStatus === "trialing" && (
           <a href="/dashboard/assinatura" className="trial-banner">
             <div>
@@ -115,25 +115,25 @@ export default async function DashboardPage() {
         <div className="dashboard-quick-actions">
           <a href="/dashboard/pedidos">
             <span>Operação</span>
-            <strong>Ver pedidos</strong>
-            <small>Acompanhar o que está em preparo →</small>
+            <strong>Pedidos</strong>
+            <small>Do novo pedido à entrega →</small>
           </a>
           <a href="/dashboard/atendimento">
             <span>Salão</span>
             <strong>Atendimento</strong>
-            <small>Chamados e pedidos de conta →</small>
+            <small>Chamados e contas no tempo certo →</small>
           </a>
           {membership.role !== "staff" && (
             <a href="/dashboard/cardapio">
               <span>Cardápio</span>
-              <strong>Editar menu</strong>
-              <small>Produtos, preços e adicionais →</small>
+              <strong>Cardápio</strong>
+              <small>Produtos, preços e personalizações →</small>
             </a>
           )}
           <a href="/dashboard/mesas">
             <span>Mesas</span>
-            <strong>Ver salão</strong>
-            <small>Ocupação, consumo e QR Codes →</small>
+            <strong>Mesas</strong>
+            <small>O salão inteiro em um olhar →</small>
           </a>
         </div>
 
