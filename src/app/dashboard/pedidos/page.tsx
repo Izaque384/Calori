@@ -126,9 +126,9 @@ export default async function OrdersPage() {
       <section className="dashboard-content orders-content">
         <div className="page-heading-row">
           <div>
-            <p className="eyebrow">Pedidos</p>
-            <h1>Acompanhe a operação.</h1>
-            <p className="muted">Novos pedidos aparecem automaticamente e cada item mantém adicionais e observações visíveis para a equipe.</p>
+            <p className="eyebrow">Cozinha e salão</p>
+            <h1>Pedidos no ritmo da operação.</h1>
+            <p className="muted">Priorize o que acabou de chegar, mantenha a cozinha alinhada e avance cada pedido sem perder contexto.</p>
           </div>
           <div className="status-chip">{activeOrders.filter((order) => order.status !== "delivered").length} em andamento</div>
         </div>
