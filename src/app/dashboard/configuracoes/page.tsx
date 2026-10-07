@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
+import ImageUpload from "@/components/image-upload";
 import { restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { eq } from "drizzle-orm";
@@ -18,6 +19,7 @@ export default async function SettingsPage() {
       name: restaurants.name,
       slug: restaurants.slug,
       logoUrl: restaurants.logoUrl,
+      bannerUrl: restaurants.bannerUrl,
       primaryColor: restaurants.primaryColor,
       phone: restaurants.phone,
       address: restaurants.address,
@@ -66,10 +68,32 @@ export default async function SettingsPage() {
                 <input name="phone" defaultValue={settings.phone ?? ""} maxLength={40} placeholder="(00) 00000-0000" disabled={!canEdit} />
               </label>
 
-              <label>
-                URL da logo
-                <input name="logoUrl" defaultValue={settings.logoUrl ?? ""} maxLength={500} placeholder="https://..." disabled={!canEdit} />
-              </label>
+            </div>
+          </section>
+
+          <section className="settings-card settings-media-card">
+            <div className="settings-card-heading">
+              <div>
+                <span className="section-kicker">Identidade visual</span>
+                <h2>Imagens do restaurante</h2>
+              </div>
+            </div>
+
+            <div className="settings-media-grid">
+              <ImageUpload
+                purpose="restaurant-logo"
+                currentUrl={settings.logoUrl}
+                label="Logo do restaurante"
+                description="Use uma versão limpa e legível. Fundos transparentes funcionam melhor."
+                aspect="logo"
+              />
+              <ImageUpload
+                purpose="restaurant-banner"
+                currentUrl={settings.bannerUrl}
+                label="Banner do cardápio"
+                description="Uma foto horizontal do ambiente, prato ou experiência da casa."
+                aspect="banner"
+              />
             </div>
           </section>
 
