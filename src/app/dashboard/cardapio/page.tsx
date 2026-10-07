@@ -73,10 +73,10 @@ export default async function MenuPage() {
       <section className="dashboard-content menu-content">
         <div className="page-heading-row">
           <div>
-            <p className="eyebrow">Cardápio</p>
-            <h1>Monte seu menu.</h1>
+            <p className="eyebrow">Experiência do cliente</p>
+            <h1>Seu cardápio, do seu jeito.</h1>
             <p className="muted">
-              Organize categorias, produtos e adicionais. Tudo aqui será a base do cardápio que o cliente verá pelo QR Code.
+              Organize pratos, categorias e personalizações com a mesma atenção que você dedica à experiência à mesa.
             </p>
           </div>
           <div className="status-chip">{productRows.length} {productRows.length === 1 ? "produto" : "produtos"}</div>
