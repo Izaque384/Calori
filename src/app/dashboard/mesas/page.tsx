@@ -97,9 +97,9 @@ export default async function TablesPage() {
       <section className="dashboard-content menu-content">
         <div className="page-heading-row">
           <div>
-            <p className="eyebrow">Mesas</p>
-            <h1>Operação do salão.</h1>
-            <p className="muted">Acompanhe quais mesas estão em uso, o consumo atual e os QR Codes de acesso.</p>
+            <p className="eyebrow">Salão</p>
+            <h1>O salão em um olhar.</h1>
+            <p className="muted">Veja ocupação, consumo e tempo de visita sem perder a simplicidade do atendimento.</p>
           </div>
           <div className="status-chip">{occupiedCount} {occupiedCount === 1 ? "ocupada" : "ocupadas"}</div>
         </div>
