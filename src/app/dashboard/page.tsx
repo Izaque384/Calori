@@ -3,6 +3,7 @@ import { orders, restaurantMembers, restaurants, serviceRequests, tableSessions 
 import { auth } from "@/lib/auth/server";
 import { and, eq, gt, gte, inArray, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { getSubscriptionSummary } from "@/lib/subscription";
 import { signOut } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -27,12 +28,23 @@ export default async function DashboardPage() {
   if (!membership) redirect("/onboarding");
 
   const [restaurant] = await db
-    .select({ id: restaurants.id, name: restaurants.name, slug: restaurants.slug })
+    .select({
+      id: restaurants.id,
+      name: restaurants.name,
+      slug: restaurants.slug,
+      subscriptionStatus: restaurants.subscriptionStatus,
+      trialEndsAt: restaurants.trialEndsAt,
+    })
     .from(restaurants)
     .where(and(eq(restaurants.id, membership.restaurantId), eq(restaurants.active, true)))
     .limit(1);
 
   if (!restaurant) redirect("/onboarding");
+
+  const subscription = getSubscriptionSummary({
+    status: restaurant.subscriptionStatus,
+    trialEndsAt: restaurant.trialEndsAt,
+  });
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -93,6 +105,7 @@ export default async function DashboardPage() {
           <a href="/dashboard/atendimento">Atendimento</a>
           {membership.role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
           {membership.role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
+          {membership.role === "owner" && <a href="/dashboard/assinatura">Assinatura</a>}
           {membership.role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
@@ -101,6 +114,19 @@ export default async function DashboardPage() {
         <p className="eyebrow">Visão geral</p>
         <h1>Olá, {session.user.name?.split(" ")[0] || "bem-vindo"}.</h1>
         <p className="muted">Acompanhe os principais números do restaurante e acesse rapidamente a operação.</p>
+        {membership.role === "owner" && restaurant.subscriptionStatus === "trialing" && (
+          <a href="/dashboard/assinatura" className="trial-banner">
+            <div>
+              <span className="section-kicker">Período gratuito</span>
+              <strong>
+                {subscription.trialDaysRemaining > 0
+                  ? `${subscription.trialDaysRemaining} ${subscription.trialDaysRemaining === 1 ? "dia restante" : "dias restantes"}`
+                  : "Trial encerrado"}
+              </strong>
+            </div>
+            <span>Ver assinatura →</span>
+          </a>
+        )}
         <div className="metric-grid">
           <article><span>Pedidos hoje</span><strong>{today.count}</strong></article>
           <article><span>Em andamento</span><strong>{inProgress}</strong></article>
