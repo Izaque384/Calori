@@ -540,7 +540,6 @@ export default function PublicMenuClient({
 
         {featuredProducts.length > 0 && (
           <section id="categoria-destaques" className="public-category public-featured-section">
-          <section className="public-category public-featured-section">
             <div className="public-category-heading">
               <span>Destaques</span>
               <small>Escolhas da casa</small>
