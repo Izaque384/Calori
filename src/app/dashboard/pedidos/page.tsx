@@ -132,6 +132,7 @@ export default async function OrdersPage() {
           <a href="/dashboard/atendimento">Atendimento</a>
           {role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
           {role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
+          {role === "owner" && <a href="/dashboard/assinatura">Assinatura</a>}
           {role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
