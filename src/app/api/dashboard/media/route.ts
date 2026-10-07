@@ -7,6 +7,7 @@ import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { canManageCatalog, canManageSettings } from "@/lib/permissions";
 
 export const runtime = "nodejs";
+// Vercel injects Blob credentials into each deployment after the store is connected.
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
