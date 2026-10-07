@@ -40,9 +40,19 @@ export async function createRestaurant(_prevState: OnboardingState, formData: Fo
   const slug = `${baseSlug}-${suffix}`;
 
   try {
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
     const [restaurant] = await db
       .insert(restaurants)
-      .values({ name, slug, phone: phone || null, address: address || null, primaryColor: "#c75a3a" })
+      .values({
+        name,
+        slug,
+        phone: phone || null,
+        address: address || null,
+        primaryColor: "#c75a3a",
+        subscriptionStatus: "trialing",
+        trialEndsAt,
+      })
       .returning({ id: restaurants.id });
 
     await db.insert(restaurantMembers).values({
