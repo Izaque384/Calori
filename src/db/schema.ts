@@ -37,6 +37,7 @@ export const restaurants = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     logoUrl: text("logo_url"),
+    bannerUrl: text("banner_url"),
     primaryColor: text("primary_color"),
     phone: text("phone"),
     address: text("address"),
