@@ -127,6 +127,41 @@ export default async function DashboardPage() {
             <span>Ver assinatura →</span>
           </a>
         )}
+        <div className="dashboard-quick-actions">
+          <a href="/dashboard/pedidos">
+            <span>Operação</span>
+            <strong>Ver pedidos</strong>
+            <small>Acompanhar o que está em preparo →</small>
+          </a>
+          <a href="/dashboard/atendimento">
+            <span>Salão</span>
+            <strong>Atendimento</strong>
+            <small>Chamados e pedidos de conta →</small>
+          </a>
+          {membership.role !== "staff" && (
+            <a href="/dashboard/cardapio">
+              <span>Cardápio</span>
+              <strong>Editar menu</strong>
+              <small>Produtos, preços e adicionais →</small>
+            </a>
+          )}
+          <a href="/dashboard/mesas">
+            <span>Mesas</span>
+            <strong>Ver salão</strong>
+            <small>Ocupação, consumo e QR Codes →</small>
+          </a>
+        </div>
+
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="section-kicker">Hoje</span>
+            <h2>Resumo da operação</h2>
+          </div>
+          {membership.role !== "staff" && (
+            <a href="/dashboard/relatorios">Ver relatórios →</a>
+          )}
+        </div>
+
         <div className="metric-grid">
           <article><span>Pedidos hoje</span><strong>{today.count}</strong></article>
           <article><span>Em andamento</span><strong>{inProgress}</strong></article>
