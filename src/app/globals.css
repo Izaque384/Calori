@@ -1,10 +1,18 @@
 :root {
-  --cream: #f6f1e8;
-  --terracotta: #c75a3a;
-  --orange: #e07a2f;
-  --wine: #7b2e3a;
+  --cream: #f8f1ea;
+  --cream-strong: #f2e6da;
+  --surface: #fffaf5;
+  --surface-strong: #fffdf9;
+  --terracotta: #c65a3a;
+  --terracotta-dark: #a8472d;
+  --orange: #d97846;
+  --wine: #7a1e2b;
   --charcoal: #1f1f1f;
-  --muted: #6d665f;
+  --muted: #756b63;
+  --mineral: #d7c9bc;
+  --line: #e6d9ce;
+  --success: #4f7859;
+  --shadow-soft: 0 18px 55px rgba(77, 45, 29, .08);
 }
 
 * { box-sizing: border-box; }
@@ -13,7 +21,7 @@ body {
   min-height: 100vh;
   background: var(--cream);
   color: var(--charcoal);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-interface), Inter, Arial, Helvetica, sans-serif;
 }
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
@@ -984,5 +992,301 @@ button, input { font: inherit; }
     width: 68px;
     height: 68px;
     border-radius: 12px;
+  }
+}
+
+
+/* =========================================================
+   CALORI — IDENTIDADE VISUAL 2026
+   Editorial gastronômico + tecnologia discreta
+   ========================================================= */
+
+html { background: var(--cream); }
+body {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(198, 90, 58, .07), transparent 26rem),
+    var(--cream);
+  color: var(--charcoal);
+  font-family: var(--font-interface), Inter, Arial, Helvetica, sans-serif;
+}
+
+button, input, textarea, select { font-family: inherit; }
+
+h1, h2, h3,
+.auth-card h1,
+.dashboard-content h1,
+.section-title h2,
+.product-card h3,
+.table-card h3,
+.qr-sheet h1,
+.public-menu-hero h1,
+.public-category-heading span,
+.public-product-card h2,
+.menu-modal h2,
+.modal-base-price,
+.cart-total strong,
+.public-order-success h2,
+.public-order-success > strong,
+.metric-grid strong,
+.dashboard-quick-actions strong,
+.dashboard-section-heading h2,
+.subscription-plan-card h2,
+.subscription-status-card h2,
+.large-empty-state strong,
+.public-empty strong,
+.qr-restaurant-name {
+  font-family: var(--font-display), "Playfair Display", Georgia, serif !important;
+}
+
+::selection {
+  background: rgba(198, 90, 58, .18);
+  color: var(--wine);
+}
+
+/* Marca */
+.calori-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--charcoal);
+  line-height: 1;
+}
+.calori-brand-lockup.inverse { color: var(--cream); }
+.calori-brand-lockup .calori-mark { flex: 0 0 auto; }
+.calori-brand-copy { display: grid; gap: 5px; }
+.calori-brand-copy strong {
+  font-family: var(--font-display), "Playfair Display", Georgia, serif;
+  font-size: 30px;
+  line-height: .9;
+  letter-spacing: -.045em;
+  font-weight: 650;
+}
+.calori-brand-copy small {
+  max-width: 220px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+}
+.calori-brand-lockup.inverse .calori-brand-copy small { color: rgba(248,241,234,.68); }
+.calori-brand-lockup.compact { gap: 7px; }
+.calori-brand-lockup.compact .calori-brand-copy strong { font-size: 24px; }
+
+/* Compatibilidade com as marcas já usadas nas telas internas */
+.brand {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display), "Playfair Display", Georgia, serif !important;
+  font-size: 28px !important;
+  font-weight: 650 !important;
+  letter-spacing: -.045em !important;
+}
+.brand::before {
+  content: "";
+  width: 23px;
+  height: 29px;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M23.7 1.6c2.2 7.8-1.5 12.7-6.1 17.2-4.1 4-7.2 7.8-6.7 13.2.3 3.1 1.8 5.7 4 7.8C7.2 38.5 2 33.1 2 26.1 2 18 8.4 13.3 14.3 9.1c4-2.8 7-4.9 9.4-7.5Z' fill='%23C65A3A'/%3E%3Cpath d='M30.9 13.4c4.7 5.3 7.1 10.2 7.1 15.4 0 8.2-6.1 14.9-14.7 17.6 1.9-2.3 3.1-4.9 3-7.8-.2-4.1-3.3-6.7-5.4-9.4-2.2-2.8-2.4-5.8-.7-9.2 2.2 2.7 3.8 5.1 3.7 7.9 3.6-3.7 6.8-7.7 7-14.5Z' fill='%23C65A3A'/%3E%3C/svg%3E");
+}
+.brand > span { display: none; }
+
+/* Superfícies e controles */
+.auth-card,
+.panel-card,
+.product-card,
+.large-empty-state,
+.table-card,
+.metric-grid article,
+.settings-card,
+.team-row,
+.reports-card,
+.subscription-plan-card,
+.subscription-status-card {
+  background: rgba(255, 250, 245, .88) !important;
+  border-color: var(--line) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.72);
+}
+
+.primary-button {
+  background: var(--terracotta) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 18px rgba(198, 90, 58, .16);
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.primary-button:hover {
+  background: var(--terracotta-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(198, 90, 58, .2);
+}
+.secondary-button,
+.secondary-link-button {
+  background: var(--cream-strong) !important;
+  color: var(--wine) !important;
+}
+.ghost-button {
+  background: rgba(215, 201, 188, .24) !important;
+  color: var(--charcoal) !important;
+}
+
+.eyebrow,
+.section-kicker,
+.product-category {
+  color: var(--terracotta) !important;
+  letter-spacing: .15em !important;
+}
+
+input, textarea, select {
+  border-color: var(--mineral) !important;
+  background: rgba(255, 253, 249, .95) !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--terracotta) !important;
+  box-shadow: 0 0 0 3px rgba(198, 90, 58, .10) !important;
+  outline: none;
+}
+
+/* Painel */
+.dashboard-shell {
+  background: #fbf7f2;
+}
+.dashboard-sidebar {
+  background: rgba(248, 241, 234, .92) !important;
+  border-color: var(--line) !important;
+  box-shadow: 10px 0 42px rgba(70, 42, 30, .025);
+}
+.restaurant-pill {
+  background: rgba(255,255,255,.42);
+  border-color: var(--line) !important;
+  border-radius: 12px !important;
+}
+.dashboard-sidebar nav a,
+.dashboard-sidebar nav span {
+  border-radius: 10px !important;
+}
+.dashboard-sidebar nav .active {
+  background: rgba(198, 90, 58, .11) !important;
+  color: var(--terracotta-dark) !important;
+}
+.dashboard-sidebar nav a:hover {
+  background: rgba(198, 90, 58, .065) !important;
+  color: var(--charcoal) !important;
+}
+.metric-grid article {
+  border-radius: 16px !important;
+  padding: 20px !important;
+}
+.metric-grid span {
+  font-size: 11px !important;
+  font-weight: 650;
+}
+.metric-grid strong {
+  font-size: 29px !important;
+  letter-spacing: -.035em;
+}
+
+.dashboard-quick-actions a {
+  border-radius: 15px !important;
+  border-color: var(--line) !important;
+  background: rgba(255, 250, 245, .78) !important;
+}
+.dashboard-quick-actions a:hover {
+  border-color: rgba(198,90,58,.28) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+/* Cardápio público */
+.public-menu-shell {
+  --restaurant-accent: #c65a3a;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--restaurant-accent) 7%, transparent), transparent 22rem),
+    #fbf6ef !important;
+}
+.public-menu-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display), "Playfair Display", Georgia, serif !important;
+  font-size: 25px !important;
+}
+.public-menu-brand::before {
+  content: "";
+  width: 18px;
+  height: 23px;
+  background: var(--restaurant-accent);
+  clip-path: polygon(58% 0, 75% 16%, 77% 30%, 69% 42%, 91% 30%, 99% 51%, 96% 68%, 82% 85%, 59% 100%, 63% 73%, 52% 56%, 36% 78%, 34% 100%, 13% 85%, 1% 65%, 3% 44%, 17% 26%, 38% 12%);
+}
+.public-menu-brand > span { display: none; }
+.public-menu-header {
+  border-color: var(--line) !important;
+}
+.public-menu-hero {
+  padding-top: 44px !important;
+}
+.public-menu-hero h1 {
+  letter-spacing: -.045em !important;
+  color: #241b17;
+}
+.public-product-card {
+  background: rgba(255, 253, 249, .76) !important;
+  border-color: var(--line) !important;
+  border-radius: 16px !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.public-product-card:hover {
+  border-color: color-mix(in srgb, var(--restaurant-accent) 28%, var(--line)) !important;
+  box-shadow: 0 12px 30px rgba(76, 43, 27, .07);
+}
+.public-search {
+  border-color: var(--line) !important;
+  background: rgba(255,253,249,.92) !important;
+}
+.public-category-chips button {
+  border-color: var(--line) !important;
+  background: rgba(255,250,245,.92) !important;
+}
+.menu-modal {
+  background: #fffaf5 !important;
+  border: 1px solid var(--line);
+}
+.floating-cart {
+  background: var(--restaurant-accent) !important;
+  border-radius: 14px !important;
+}
+
+/* Onboarding */
+.onboarding-intro {
+  background:
+    linear-gradient(145deg, rgba(31,31,31,.98), rgba(45,31,25,.98)) !important;
+}
+.onboarding-intro .brand { color: var(--cream); }
+.onboarding-intro .brand::before {
+  filter: brightness(0) invert(1);
+  opacity: .92;
+}
+.onboarding-card h2 {
+  font-family: var(--font-display), "Playfair Display", Georgia, serif !important;
+}
+
+/* Movimento mais refinado */
+@media (prefers-reduced-motion: no-preference) {
+  .panel-card,
+  .product-card,
+  .table-card,
+  .metric-grid article,
+  .dashboard-quick-actions a,
+  .public-product-card {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+}
+
+@media (max-width: 800px) {
+  .dashboard-sidebar {
+    background: rgba(248, 241, 234, .96) !important;
   }
 }
