@@ -12,7 +12,7 @@ export default function SignInPage() {
       <section className="auth-card">
         <Link href="/" className="brand">Calori<span>.</span></Link>
         <p className="eyebrow">Bem-vindo de volta</p>
-        <h1>Entre na Calori</h1>
+        <h1>Entre no Calori</h1>
         <p className="muted">Acesse o painel do seu restaurante.</p>
         <form action={action} className="form-stack">
           <label>E-mail<input name="email" type="email" required autoComplete="email" placeholder="voce@restaurante.com" /></label>
