@@ -75,6 +75,7 @@ export default async function TeamPage() {
           <a href="/dashboard/atendimento">Atendimento</a>
           <a href="/dashboard/relatorios">Relatórios</a>
           <a className="active" href="/dashboard/equipe">Equipe</a>
+          <a href="/dashboard/assinatura">Assinatura</a>
           <a href="/dashboard/configuracoes">Configurações</a>
         </nav>
         <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
