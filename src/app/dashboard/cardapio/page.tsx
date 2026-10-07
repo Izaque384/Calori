@@ -193,12 +193,16 @@ export default async function MenuPage() {
                 return (
                   <article className="product-card" key={product.id}>
                     <div className="product-topline">
-                      {product.imageUrl && (
+                      {product.imageUrl ? (
                         <img
                           className="dashboard-product-image"
                           src={product.imageUrl}
                           alt={product.name}
                         />
+                      ) : (
+                        <div className="dashboard-product-image product-image-placeholder">
+                          <span>Sem foto</span>
+                        </div>
                       )}
                       <div>
                         <span className="product-category">{product.categoryId ? categoryName.get(product.categoryId) ?? "Categoria" : "Sem categoria"}</span>
@@ -208,6 +212,12 @@ export default async function MenuPage() {
                       <div className="product-price">{formatMoney(product.price)}</div>
                     </div>
 
+                    <details className="product-management-details">
+                      <summary>
+                        <span>Editar produto</span>
+                        <small>Nome, preço, categoria, descrição e imagem</small>
+                      </summary>
+                      <div className="product-management-body">
                     <form action={updateProductDetails} className="product-edit-form">
                       <input type="hidden" name="productId" value={product.id} />
                       <div className="form-row">
@@ -246,6 +256,8 @@ export default async function MenuPage() {
                       />
                       <button className="secondary-button" type="submit">Salvar imagem</button>
                     </form>
+                      </div>
+                    </details>
 
                     <div className="product-actions">
                       <form action={toggleProductFeatured}>
@@ -268,6 +280,11 @@ export default async function MenuPage() {
                       </form>
                     </div>
 
+                    <details className="product-addons-details">
+                      <summary>
+                        <span>Adicionais e opções</span>
+                        <small>{productGroups.length} {productGroups.length === 1 ? "grupo configurado" : "grupos configurados"}</small>
+                      </summary>
                     <div className="addons-box">
                       <div className="addons-heading">
                         <div>
@@ -340,6 +357,7 @@ export default async function MenuPage() {
                         </div>
                       )}
                     </div>
+                    </details>
                   </article>
                 );
               })}
