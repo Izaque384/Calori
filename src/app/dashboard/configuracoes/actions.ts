@@ -28,7 +28,6 @@ export async function updateRestaurantSettings(formData: FormData) {
     throw new Error("Informe um nome válido para o restaurante.");
   }
 
-  const logoUrl = normalizeOptional(formData.get("logoUrl"), 500);
   const phone = normalizeOptional(formData.get("phone"), 40);
   const address = normalizeOptional(formData.get("address"), 300);
   const primaryColor = normalizeColor(formData.get("primaryColor"));
@@ -37,7 +36,6 @@ export async function updateRestaurantSettings(formData: FormData) {
     .update(restaurants)
     .set({
       name,
-      logoUrl,
       phone,
       address,
       primaryColor,
