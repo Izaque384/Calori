@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
+import ImageUpload from "@/components/image-upload";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { asc, eq } from "drizzle-orm";
@@ -19,7 +20,6 @@ import {
   toggleProductFeatured,
   updateCategoryName,
   updateProductDetails,
-  updateProductImage,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -162,10 +162,10 @@ export default async function MenuPage() {
                 <textarea name="description" rows={3} placeholder="Descreva ingredientes, preparo ou destaque do prato." />
               </label>
 
-              <label>
-                URL da imagem
-                <input name="imageUrl" type="url" placeholder="https://..." />
-              </label>
+              <div className="product-create-media-note">
+                <span>Foto do produto</span>
+                <p>Crie o produto primeiro. Depois você poderá enviar a foto diretamente no card do item.</p>
+              </div>
 
               <button className="primary-button" type="submit">Adicionar ao cardápio</button>
             </form>
@@ -246,16 +246,14 @@ export default async function MenuPage() {
                       <button className="secondary-button" type="submit">Salvar alterações</button>
                     </form>
 
-                    <form action={updateProductImage} className="product-image-form">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <input
-                        name="imageUrl"
-                        type="url"
-                        defaultValue={product.imageUrl ?? ""}
-                        placeholder="URL da imagem"
-                      />
-                      <button className="secondary-button" type="submit">Salvar imagem</button>
-                    </form>
+                    <ImageUpload
+                      purpose="product"
+                      productId={product.id}
+                      currentUrl={product.imageUrl}
+                      label="Foto do produto"
+                      description="Prefira uma foto clara, centralizada e com boa iluminação."
+                      aspect="square"
+                    />
                       </div>
                     </details>
 
