@@ -18,7 +18,8 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "qrcode": "latest"
+    "qrcode": "latest",
+    "@vercel/blob": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
