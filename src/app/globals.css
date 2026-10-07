@@ -2806,3 +2806,218 @@ input:focus, textarea:focus, select:focus {
     margin-left: 0;
   }
 }
+
+
+/* =========================================================
+   MEDIA UPLOADS — logo, banner e produtos
+   ========================================================= */
+.settings-media-card {
+  overflow: visible !important;
+}
+.settings-media-grid {
+  display: grid;
+  grid-template-columns: minmax(240px,.75fr) minmax(360px,1.25fr);
+  gap: 18px;
+}
+.media-uploader {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+}
+.media-uploader-preview {
+  position: relative;
+  overflow: hidden;
+  border: 1px dashed #d8c9bd;
+  background:
+    radial-gradient(circle at 76% 20%, rgba(198,90,58,.08), transparent 34%),
+    #f5ede6;
+}
+.media-uploader-preview.square {
+  width: 150px;
+  aspect-ratio: 1;
+  border-radius: 16px;
+}
+.media-uploader-preview.logo {
+  width: 150px;
+  aspect-ratio: 1;
+  border-radius: 18px;
+}
+.media-uploader-preview.banner {
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  min-height: 150px;
+  border-radius: 16px;
+}
+.media-uploader-preview.has-image {
+  border-style: solid;
+  border-color: var(--line);
+  background: #eee4da;
+}
+.media-uploader-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.media-uploader-preview.logo img {
+  object-fit: contain;
+  padding: 14px;
+  background: #fffdf9;
+}
+.media-uploader-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: #9a8c81;
+}
+.media-uploader-empty > span {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(198,90,58,.10);
+  color: var(--terracotta);
+  font-size: 18px;
+  font-weight: 400;
+}
+.media-uploader-empty strong {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.media-uploader-copy {
+  display: grid;
+  gap: 5px;
+}
+.media-uploader-copy > strong {
+  font-size: 11px;
+}
+.media-uploader-copy > p {
+  max-width: 440px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.media-uploader-copy > span {
+  color: #9e9085;
+  font-size: 8px;
+}
+.media-uploader-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.media-uploader-actions .secondary-button {
+  min-height: 34px !important;
+}
+.media-upload-success,
+.media-upload-error {
+  margin: 3px 0 0;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.media-upload-success { color: var(--success); }
+.media-upload-error { color: #a9493b; }
+
+.product-management-body .media-uploader {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eaded3;
+  grid-template-columns: auto minmax(0,1fr);
+  align-items: center;
+}
+.product-create-media-note {
+  padding: 11px 12px;
+  border: 1px dashed #ddcfc3;
+  border-radius: 11px;
+  background: rgba(248,241,234,.45);
+}
+.product-create-media-note > span {
+  display: block;
+  color: var(--charcoal);
+  font-size: 9px;
+  font-weight: 800;
+}
+.product-create-media-note > p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+/* Banner no cardápio público */
+.public-menu-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.public-menu-hero-copy {
+  position: relative;
+  z-index: 2;
+}
+.public-menu-banner {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+.public-menu-banner-overlay {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(22,15,11,.72) 0%, rgba(22,15,11,.38) 58%, rgba(22,15,11,.16) 100%),
+    linear-gradient(to top, rgba(22,15,11,.38), transparent 55%);
+}
+.public-menu-hero.has-banner {
+  min-height: 290px;
+  display: flex;
+  align-items: flex-end;
+  padding: 42px clamp(18px, 4vw, 48px) !important;
+  border-radius: 0 0 24px 24px;
+  color: white;
+}
+.public-menu-hero.has-banner h1 {
+  color: #fffaf5 !important;
+}
+.public-menu-hero.has-banner p {
+  color: rgba(255,250,245,.78);
+}
+.public-menu-hero.has-banner > .public-menu-hero-copy > span {
+  color: #f1b59b;
+}
+
+@media (max-width: 840px) {
+  .settings-media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .media-uploader-preview.banner {
+    min-height: 130px;
+  }
+  .product-management-body .media-uploader {
+    grid-template-columns: 1fr;
+  }
+  .media-uploader-preview.square,
+  .media-uploader-preview.logo {
+    width: 128px;
+  }
+  .public-menu-hero.has-banner {
+    min-height: 250px;
+    padding: 34px 18px !important;
+    border-radius: 0 0 18px 18px;
+  }
+}
