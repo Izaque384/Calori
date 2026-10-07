@@ -32,7 +32,7 @@ function isBlobUrl(url: string | null) {
 }
 
 async function deleteBlobBestEffort(url: string | null) {
-  if (!isBlobUrl(url) || !process.env.BLOB_READ_WRITE_TOKEN) return;
+  if (!isBlobUrl(url)) return;
   try {
     await del(url!);
   } catch {
@@ -52,17 +52,6 @@ async function getProduct(productId: string, restaurantId: string) {
 
 export async function POST(request: Request) {
   const { restaurant, role } = await requireCurrentRestaurant();
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json(
-      {
-        error:
-          "O armazenamento de imagens ainda não está habilitado na Vercel. Conecte um Blob Store ao projeto Calori para liberar os uploads.",
-        code: "MEDIA_STORAGE_NOT_CONFIGURED",
-      },
-      { status: 503 },
-    );
-  }
 
   const formData = await request.formData();
   const purposeRaw = String(formData.get("purpose") ?? "");
@@ -152,8 +141,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: blob.url });
   } catch {
     return NextResponse.json(
-      { error: "Não foi possível enviar a imagem. Tente novamente." },
-      { status: 500 },
+      {
+        error:
+          "Não foi possível acessar o armazenamento de imagens. Verifique se um Vercel Blob Store está conectado ao projeto Calori.",
+      },
+      { status: 503 },
     );
   }
 }
