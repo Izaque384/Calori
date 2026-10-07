@@ -22,6 +22,12 @@ export default function Home() {
         <p style={{ maxWidth: 650, fontSize: 20, lineHeight: 1.6, color: "var(--muted)" }}>
           Cardápio, pedidos e atendimento em uma experiência simples, elegante e próxima.
         </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginTop: 28 }}>
+          <Link href="/auth/sign-up" style={{ background: "var(--terracotta)", color: "white", padding: "13px 18px", borderRadius: 12, fontSize: 14, fontWeight: 800 }}>
+            Testar grátis por 14 dias
+          </Link>
+          <span style={{ color: "var(--muted)", fontSize: 13 }}>Sem cartão · depois R$ 59/mês</span>
+        </div>
       </section>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginTop: 72 }}>
@@ -31,6 +37,21 @@ export default function Home() {
             <p style={{ color: "var(--muted)", lineHeight: 1.6, marginBottom: 0 }}>{text}</p>
           </article>
         ))}
+      </section>
+
+      <section style={{ marginTop: 72, background: "#1f1f1f", color: "white", borderRadius: 28, padding: "clamp(28px, 6vw, 52px)", display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 28, alignItems: "center" }}>
+        <div>
+          <p style={{ margin: 0, color: "#e7b69e", textTransform: "uppercase", letterSpacing: ".12em", fontSize: 11, fontWeight: 800 }}>Plano único</p>
+          <h2 style={{ margin: "10px 0 12px", fontFamily: "Georgia, serif", fontSize: "clamp(32px, 5vw, 52px)" }}>R$ 59/mês</h2>
+          <p style={{ margin: 0, color: "#d9d3cc", lineHeight: 1.6 }}>Todos os recursos. Um restaurante. Cancele quando quiser.</p>
+        </div>
+        <div style={{ display: "grid", gap: 8, justifyItems: "start" }}>
+          <strong>14 dias grátis</strong>
+          <span style={{ color: "#d9d3cc", fontSize: 13 }}>Sem cartão no início.</span>
+          <Link href="/auth/sign-up" style={{ marginTop: 6, background: "var(--terracotta)", color: "white", padding: "12px 16px", borderRadius: 12, fontSize: 14, fontWeight: 800 }}>
+            Começar agora
+          </Link>
+        </div>
       </section>
     </main>
   );
