@@ -106,8 +106,8 @@ export default async function ServicePage() {
         <div className="page-heading-row">
           <div>
             <p className="eyebrow">Atendimento</p>
-            <h1>Chamados das mesas.</h1>
-            <p className="muted">Veja quem chamou o garçom ou pediu a conta e marque cada solicitação assim que for resolvida.</p>
+            <h1>Atenda no tempo certo.</h1>
+            <p className="muted">Chamados e pedidos de conta chegam aqui para sua equipe responder rápido, sem tirar o toque humano do serviço.</p>
           </div>
           <div className="status-chip">{pending.length} pendentes</div>
         </div>
@@ -149,7 +149,7 @@ export default async function ServicePage() {
 
                 {request.type === "request_bill" && (
                   <div className="service-bill-summary">
-                    <span>Consumo da sessão</span>
+                    <span>Consumo da mesa</span>
                     <strong>
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
