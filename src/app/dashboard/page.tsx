@@ -1,10 +1,10 @@
 import { db } from "@/db";
+import DashboardSidebar from "@/components/dashboard-sidebar";
 import { orders, restaurantMembers, restaurants, serviceRequests, tableSessions } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
 import { and, eq, gt, gte, inArray, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getSubscriptionSummary } from "@/lib/subscription";
-import { signOut } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -94,22 +94,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="dashboard-shell">
-      <aside className="dashboard-sidebar">
-        <div className="brand">Calori<span>.</span></div>
-        <div className="restaurant-pill">{restaurant.name}</div>
-        <nav>
-          <a className="active" href="/dashboard">Visão geral</a>
-          <a href="/dashboard/pedidos">Pedidos</a>
-          {membership.role !== "staff" && <a href="/dashboard/cardapio">Cardápio</a>}
-          <a href="/dashboard/mesas">Mesas</a>
-          <a href="/dashboard/atendimento">Atendimento</a>
-          {membership.role !== "staff" && <a href="/dashboard/relatorios">Relatórios</a>}
-          {membership.role === "owner" && <a href="/dashboard/equipe">Equipe</a>}
-          {membership.role === "owner" && <a href="/dashboard/assinatura">Assinatura</a>}
-          {membership.role === "owner" && <a href="/dashboard/configuracoes">Configurações</a>}
-        </nav>
-        <form action={signOut}><button className="ghost-button" type="submit">Sair</button></form>
-      </aside>
+      <DashboardSidebar restaurantName={restaurant.name} role={membership.role} activePath="/dashboard" />
       <section className="dashboard-content">
         <p className="eyebrow">Visão geral</p>
         <h1>Olá, {session.user.name?.split(" ")[0] || "bem-vindo"}.</h1>
