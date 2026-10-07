@@ -19,6 +19,7 @@ export default async function PublicMenuPage({ params }: Props) {
       slug: restaurants.slug,
       primaryColor: restaurants.primaryColor,
       logoUrl: restaurants.logoUrl,
+      bannerUrl: restaurants.bannerUrl,
       phone: restaurants.phone,
       address: restaurants.address,
     })
@@ -125,10 +126,23 @@ export default async function PublicMenuPage({ params }: Props) {
         <div className="public-table-pill">{table.name}</div>
       </header>
 
-      <section className="public-menu-hero">
-        <span>Cardápio digital</span>
-        <h1>Escolha com calma.</h1>
-        <p>Monte seu pedido, personalize os itens e envie direto para o restaurante.</p>
+      <section className={`public-menu-hero ${restaurant.bannerUrl ? "has-banner" : ""}`}>
+        {restaurant.bannerUrl && (
+          <>
+            <img
+              className="public-menu-banner"
+              src={restaurant.bannerUrl}
+              alt=""
+              aria-hidden="true"
+            />
+            <div className="public-menu-banner-overlay" />
+          </>
+        )}
+        <div className="public-menu-hero-copy">
+          <span>Cardápio digital</span>
+          <h1>Escolha com calma.</h1>
+          <p>Monte seu pedido, personalize os itens e envie direto para o restaurante.</p>
+        </div>
       </section>
 
       {productRows.length === 0 ? (
