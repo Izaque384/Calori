@@ -85,6 +85,7 @@ export default function PublicMenuClient({
   const [billOpen, setBillOpen] = useState(false);
   const [billLoading, setBillLoading] = useState(false);
   const [billError, setBillError] = useState("");
+  const [search, setSearch] = useState("");
   const [bill, setBill] = useState<{
     table: string;
     orderCount: number;
@@ -116,7 +117,22 @@ export default function PublicMenuClient({
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const featuredProducts = products.filter((product) => product.featured);
+
+  const visibleProducts = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("pt-BR");
+    if (!query) return products;
+
+    return products.filter((product) => {
+      const haystack = `${product.name} ${product.description ?? ""}`.toLocaleLowerCase("pt-BR");
+      return haystack.includes(query);
+    });
+  }, [products, search]);
+
+  const featuredProducts = visibleProducts.filter((product) => product.featured);
+
+  function scrollToCategory(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
   const cartStorageKey = `calori-cart:${restaurantSlug}:${tableCode}`;
@@ -460,7 +476,70 @@ export default function PublicMenuClient({
   return (
     <>
       <section className="public-menu-sections">
+        <div className="public-menu-tools">
+          <label className="public-search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar no cardápio"
+              aria-label="Buscar produtos no cardápio"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch("")} aria-label="Limpar busca">×</button>
+            )}
+          </label>
+
+          {!search && (
+            <div className="public-category-chips" aria-label="Categorias">
+              {featuredProducts.length > 0 && (
+                <button type="button" onClick={() => scrollToCategory("categoria-destaques")}>
+                  Destaques
+                </button>
+              )}
+              {categories.map((category) => {
+                const count = products.filter((product) => product.categoryId === category.id).length;
+                if (!count) return null;
+                return (
+                  <button
+                    type="button"
+                    key={category.id}
+                    onClick={() => scrollToCategory(`categoria-${category.id}`)}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
+              {products.some((product) => !product.categoryId) && (
+                <button type="button" onClick={() => scrollToCategory("categoria-outros")}>
+                  Outros
+                </button>
+              )}
+            </div>
+          )}
+
+          {search && (
+            <p className="public-search-result">
+              {visibleProducts.length === 0
+                ? "Nenhum item encontrado."
+                : `${visibleProducts.length} ${visibleProducts.length === 1 ? "item encontrado" : "itens encontrados"}`}
+            </p>
+          )}
+        </div>
+
+        {search && visibleProducts.length === 0 && (
+          <div className="public-empty public-search-empty">
+            <strong>Nada por aqui.</strong>
+            <span>Tente outro nome ou limpe a busca para ver todo o cardápio.</span>
+            <button type="button" className="secondary-button" onClick={() => setSearch("")}>
+              Limpar busca
+            </button>
+          </div>
+        )}
+
         {featuredProducts.length > 0 && (
+          <section id="categoria-destaques" className="public-category public-featured-section">
           <section className="public-category public-featured-section">
             <div className="public-category-heading">
               <span>Destaques</span>
@@ -490,11 +569,11 @@ export default function PublicMenuClient({
         )}
 
         {categories.map((category) => {
-          const items = products.filter((product) => product.categoryId === category.id);
+          const items = visibleProducts.filter((product) => product.categoryId === category.id);
           if (!items.length) return null;
 
           return (
-            <section className="public-category" key={category.id}>
+            <section id={`categoria-${category.id}`} className="public-category" key={category.id}>
               <div className="public-category-heading">
                 <span>{category.name}</span>
                 <small>{items.length} {items.length === 1 ? "item" : "itens"}</small>
@@ -517,13 +596,13 @@ export default function PublicMenuClient({
           );
         })}
 
-        {products.some((product) => !product.categoryId) && (
-          <section className="public-category">
+        {visibleProducts.some((product) => !product.categoryId) && (
+          <section id="categoria-outros" className="public-category">
             <div className="public-category-heading">
               <span>Outros</span>
             </div>
             <div className="public-product-list">
-              {products.filter((product) => !product.categoryId).map((product) => (
+              {visibleProducts.filter((product) => !product.categoryId).map((product) => (
                 <button className="public-product-card product-button" type="button" key={product.id} onClick={() => openProduct(product)}>
                   {product.imageUrl && (
                     <img className="public-product-image" src={product.imageUrl} alt={product.name} />
