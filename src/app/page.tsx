@@ -75,10 +75,11 @@ export default function Home() {
       </section>
 
       <section className="landing-editorial" id="experiencia">
-        <div
+        <img
           className="landing-editorial-photo"
-          role="img"
-          aria-label="Mesa de restaurante elegante preparada para receber clientes"
+          src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=88"
+          alt="Mesa de restaurante elegante preparada para receber clientes"
+          loading="lazy"
         />
         <div className="landing-editorial-copy">
           <span className="section-kicker">Simples, elegante e próximo</span>
