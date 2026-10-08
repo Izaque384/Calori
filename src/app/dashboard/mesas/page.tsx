@@ -5,6 +5,7 @@ import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import Link from "next/link";
 import { closeTableVisit, createTable, toggleTable } from "./actions";
+import TablesMonitor from "./tables-monitor";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +100,20 @@ export default async function TablesPage() {
             <h1>O salão em um olhar.</h1>
             <p className="muted">Veja ocupação, consumo e tempo de visita sem perder a simplicidade do atendimento.</p>
           </div>
-          <div className="status-chip">{occupiedCount} {occupiedCount === 1 ? "ocupada" : "ocupadas"}</div>
+          <div className="tables-heading-status">
+            <div className="status-chip">{occupiedCount} {occupiedCount === 1 ? "ocupada" : "ocupadas"}</div>
+            <TablesMonitor
+              initialVisits={openVisits.map((visit) => ({
+                id: visit.id,
+                tableId: visit.tableId,
+                openedAt: visit.openedAt.toISOString(),
+                orderCount: activeOrders.filter((order) => order.visitId === visit.id).length,
+                total: activeOrders
+                  .filter((order) => order.visitId === visit.id)
+                  .reduce((sum, order) => sum + Number(order.total), 0),
+              }))}
+            />
+          </div>
         </div>
 
         {canManage && (
