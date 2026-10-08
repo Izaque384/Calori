@@ -18,6 +18,8 @@ import {
   toggleOptionAvailability,
   toggleProductAvailability,
   toggleProductFeatured,
+  moveCategory,
+  moveProduct,
   updateCategoryName,
   updateProductDetails,
 } from "./actions";
@@ -108,6 +110,18 @@ export default async function MenuPage() {
                       <button className="secondary-button" type="submit">Salvar</button>
                     </form>
                     <div className="category-row-actions">
+                      <div className="catalog-order-controls" aria-label="Ordenar categoria">
+                        <form action={moveCategory}>
+                          <input type="hidden" name="categoryId" value={category.id} />
+                          <input type="hidden" name="direction" value="up" />
+                          <button className="catalog-order-button" type="submit" aria-label={`Mover ${category.name} para cima`}>↑</button>
+                        </form>
+                        <form action={moveCategory}>
+                          <input type="hidden" name="categoryId" value={category.id} />
+                          <input type="hidden" name="direction" value="down" />
+                          <button className="catalog-order-button" type="submit" aria-label={`Mover ${category.name} para baixo`}>↓</button>
+                        </form>
+                      </div>
                       <form action={toggleCategoryActive}>
                         <input type="hidden" name="categoryId" value={category.id} />
                         <input type="hidden" name="active" value={String(category.active)} />
@@ -258,6 +272,18 @@ export default async function MenuPage() {
                     </details>
 
                     <div className="product-actions">
+                      <div className="catalog-order-controls" aria-label="Ordenar produto">
+                        <form action={moveProduct}>
+                          <input type="hidden" name="productId" value={product.id} />
+                          <input type="hidden" name="direction" value="up" />
+                          <button className="catalog-order-button" type="submit" aria-label={`Mover ${product.name} para cima`}>↑</button>
+                        </form>
+                        <form action={moveProduct}>
+                          <input type="hidden" name="productId" value={product.id} />
+                          <input type="hidden" name="direction" value="down" />
+                          <button className="catalog-order-button" type="submit" aria-label={`Mover ${product.name} para baixo`}>↓</button>
+                        </form>
+                      </div>
                       <form action={toggleProductFeatured}>
                         <input type="hidden" name="productId" value={product.id} />
                         <input type="hidden" name="featured" value={String(product.featured)} />
