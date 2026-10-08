@@ -96,6 +96,9 @@ export const teamInvites = pgTable(
   },
   (table) => [
     uniqueIndex("team_invites_token_hash_uq").on(table.tokenHash),
+    uniqueIndex("team_invites_one_pending_per_email_uq")
+      .on(table.restaurantId, table.email)
+      .where(sql`${table.status} = 'pending'`),
     index("team_invites_restaurant_idx").on(table.restaurantId),
     index("team_invites_email_idx").on(table.email),
   ],
