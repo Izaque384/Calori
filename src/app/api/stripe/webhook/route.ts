@@ -6,7 +6,7 @@ import {
   verifyCheckoutReference,
   verifyStripeSignature,
 } from "@/lib/stripe-billing";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, lt, or } from "drizzle-orm";
 
 type StripeLikeObject = Record<string, unknown>;
 
@@ -225,6 +225,14 @@ export async function POST(request: Request) {
       .update(stripeWebhookEvents)
       .set({ processedAt: new Date() })
       .where(eq(stripeWebhookEvents.eventId, eventId));
+
+    if (Math.random() < 0.02) {
+      const retentionCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      await db
+        .delete(stripeWebhookEvents)
+        .where(lt(stripeWebhookEvents.receivedAt, retentionCutoff))
+        .catch(() => undefined);
+    }
   } catch (error) {
     await db
       .delete(stripeWebhookEvents)
