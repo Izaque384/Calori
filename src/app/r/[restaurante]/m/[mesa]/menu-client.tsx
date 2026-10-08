@@ -137,6 +137,7 @@ export default function PublicMenuClient({
   const tableSessionKey = `calori-table-session:${restaurantSlug}:${tableCode}`;
   const cartStorageKey = `calori-cart:${restaurantSlug}:${tableCode}`;
   const activeOrderStorageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
+  const pendingOrderRequestKey = `calori-pending-order-request:${restaurantSlug}:${tableCode}`;
 
   async function createTableSession() {
     const response = await fetch("/api/public/session", {
@@ -404,6 +405,11 @@ export default function PublicMenuClient({
 
     try {
       const token = await ensureTableSession();
+      let requestKey = window.localStorage.getItem(pendingOrderRequestKey);
+      if (!requestKey) {
+        requestKey = crypto.randomUUID();
+        window.localStorage.setItem(pendingOrderRequestKey, requestKey);
+      }
 
       let response = await fetch("/api/public/orders", {
         method: "POST",
@@ -412,6 +418,7 @@ export default function PublicMenuClient({
           restaurantSlug,
           tableCode,
           sessionToken: token,
+          requestKey,
           items: cart.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -424,6 +431,7 @@ export default function PublicMenuClient({
       if (response.status === 401) {
         window.localStorage.removeItem(tableSessionKey);
         window.localStorage.removeItem(cartStorageKey);
+        window.localStorage.removeItem(pendingOrderRequestKey);
         setSessionToken(null);
         setCart([]);
         setError("Esta visita já foi encerrada. Reabra o cardápio pelo QR Code antes de fazer um novo pedido.");
@@ -433,6 +441,9 @@ export default function PublicMenuClient({
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status < 500) {
+          window.localStorage.removeItem(pendingOrderRequestKey);
+        }
         setError(data.error || "Não conseguimos enviar seu pedido.");
         return;
       }
@@ -448,6 +459,7 @@ export default function PublicMenuClient({
       window.localStorage.setItem(activeOrderStorageKey, JSON.stringify(activeOrder));
       setCart([]);
       window.localStorage.removeItem(cartStorageKey);
+      window.localStorage.removeItem(pendingOrderRequestKey);
       setCartOpen(false);
     } catch {
       setError("Não conseguimos enviar seu pedido. Verifique sua conexão e tente novamente.");
