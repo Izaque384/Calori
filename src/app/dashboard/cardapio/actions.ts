@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageCatalog } from "@/lib/permissions";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { del } from "@vercel/blob";
 
@@ -127,6 +127,13 @@ export async function createProduct(formData: FormData) {
     throw new Error("Categoria inválida");
   }
 
+  const [lastProduct] = await db
+    .select({ sortOrder: products.sortOrder })
+    .from(products)
+    .where(eq(products.restaurantId, restaurant.id))
+    .orderBy(desc(products.sortOrder))
+    .limit(1);
+
   await db.insert(products).values({
     restaurantId: restaurant.id,
     categoryId: categoryId || null,
@@ -135,6 +142,7 @@ export async function createProduct(formData: FormData) {
     imageUrl,
     price,
     available: true,
+    sortOrder: (lastProduct?.sortOrder ?? 0) + 1,
   });
 
   revalidatePath("/dashboard/cardapio");
@@ -399,6 +407,95 @@ export async function toggleProductFeatured(formData: FormData) {
     .update(products)
     .set({ featured: !featured, updatedAt: new Date() })
     .where(and(eq(products.id, productId), eq(products.restaurantId, restaurant.id)));
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+
+export async function moveCategory(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const direction = String(formData.get("direction") ?? "");
+
+  if (!categoryId || !["up", "down"].includes(direction)) return;
+
+  const rows = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.restaurantId, restaurant.id))
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
+
+  const index = rows.findIndex((row) => row.id === categoryId);
+  if (index < 0) return;
+
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+  const reordered = [...rows];
+  [reordered[index], reordered[targetIndex]] = [
+    reordered[targetIndex],
+    reordered[index],
+  ];
+
+  await db.batch(
+    reordered.map((row, sortOrder) =>
+      db
+        .update(categories)
+        .set({ sortOrder: sortOrder + 1 })
+        .where(
+          and(
+            eq(categories.id, row.id),
+            eq(categories.restaurantId, restaurant.id),
+          ),
+        ),
+    ),
+  );
+
+  revalidatePath("/dashboard/cardapio");
+}
+
+export async function moveProduct(formData: FormData) {
+  const { restaurant, role } = await requireCurrentRestaurant();
+  assertPermission(canManageCatalog(role));
+
+  const productId = String(formData.get("productId") ?? "");
+  const direction = String(formData.get("direction") ?? "");
+
+  if (!productId || !["up", "down"].includes(direction)) return;
+
+  const rows = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.restaurantId, restaurant.id))
+    .orderBy(asc(products.sortOrder), asc(products.name));
+
+  const index = rows.findIndex((row) => row.id === productId);
+  if (index < 0) return;
+
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+  const reordered = [...rows];
+  [reordered[index], reordered[targetIndex]] = [
+    reordered[targetIndex],
+    reordered[index],
+  ];
+
+  await db.batch(
+    reordered.map((row, sortOrder) =>
+      db
+        .update(products)
+        .set({ sortOrder: sortOrder + 1, updatedAt: new Date() })
+        .where(
+          and(
+            eq(products.id, row.id),
+            eq(products.restaurantId, restaurant.id),
+          ),
+        ),
+    ),
+  );
 
   revalidatePath("/dashboard/cardapio");
 }
