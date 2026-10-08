@@ -344,6 +344,9 @@ export const serviceRequests = pgTable(
     index("service_requests_restaurant_status_idx").on(table.restaurantId, table.status),
     index("service_requests_table_idx").on(table.tableId),
     index("service_requests_visit_idx").on(table.visitId),
+    uniqueIndex("service_requests_one_pending_per_visit_type_uq")
+      .on(table.restaurantId, table.visitId, table.type)
+      .where(sql`${table.status} = 'pending' and ${table.visitId} is not null`),
   ],
 );
 
