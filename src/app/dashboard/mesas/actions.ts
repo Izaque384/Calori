@@ -48,6 +48,24 @@ export async function toggleTable(formData: FormData) {
 
   if (!tableId) return;
 
+  if (active) {
+    const [openVisit] = await db
+      .select({ id: tableVisits.id })
+      .from(tableVisits)
+      .where(
+        and(
+          eq(tableVisits.restaurantId, restaurant.id),
+          eq(tableVisits.tableId, tableId),
+          isNull(tableVisits.closedAt),
+        ),
+      )
+      .limit(1);
+
+    if (openVisit) {
+      throw new Error("Encerre a visita da mesa antes de pausá-la.");
+    }
+  }
+
   await db
     .update(tables)
     .set({ active: !active })
