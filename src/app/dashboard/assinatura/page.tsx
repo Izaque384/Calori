@@ -3,6 +3,7 @@ import DashboardSidebar from "@/components/dashboard-sidebar";
 import { restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { formatCaloriMonthlyPrice, getSubscriptionSummary } from "@/lib/subscription";
+import { buildCaloriCheckoutUrl, CALORI_STRIPE_PORTAL_LOGIN } from "@/lib/stripe-billing";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -17,8 +18,7 @@ function statusLabel(status: string, trialActive: boolean) {
 }
 
 export default async function SubscriptionPage() {
-  const { restaurant, role } = await requireCurrentRestaurant();
-  if (role !== "owner") redirect("/dashboard");
+  const { restaurant, role, session } = await requireCurrentRestaurant({ allowExpiredSubscription: true });
 
   const [row] = await db
     .select({
@@ -26,6 +26,9 @@ export default async function SubscriptionPage() {
       trialEndsAt: restaurants.trialEndsAt,
       subscriptionStartedAt: restaurants.subscriptionStartedAt,
       subscriptionCanceledAt: restaurants.subscriptionCanceledAt,
+      stripeCustomerId: restaurants.stripeCustomerId,
+      stripeSubscriptionId: restaurants.stripeSubscriptionId,
+      subscriptionCurrentPeriodEnd: restaurants.subscriptionCurrentPeriodEnd,
     })
     .from(restaurants)
     .where(eq(restaurants.id, restaurant.id))
@@ -37,6 +40,12 @@ export default async function SubscriptionPage() {
     status: row.subscriptionStatus,
     trialEndsAt: row.trialEndsAt,
   });
+
+  const checkoutUrl = buildCaloriCheckoutUrl({
+    restaurantId: restaurant.id,
+    email: session.user.email,
+  });
+  const canManageBilling = role === "owner";
 
   return (
     <main className="dashboard-shell">
@@ -77,6 +86,11 @@ export default async function SubscriptionPage() {
               <h2>{summary.trialDaysRemaining} {summary.trialDaysRemaining === 1 ? "dia restante" : "dias restantes"}</h2>
               <p>Seu período gratuito termina em {row.trialEndsAt?.toLocaleDateString("pt-BR")}.</p>
               <p className="muted">Nenhum cartão é necessário durante o período gratuito.</p>
+              {canManageBilling && (
+                <p className="subscription-inline-note">
+                  A cobrança só começa quando você contratar o plano após o trial.
+                </p>
+              )}
             </>
           ) : summary.isActive ? (
             <>
@@ -85,15 +99,49 @@ export default async function SubscriptionPage() {
               {row.subscriptionStartedAt && (
                 <p>Assinatura iniciada em {row.subscriptionStartedAt.toLocaleDateString("pt-BR")}.</p>
               )}
+              {row.subscriptionCurrentPeriodEnd && (
+                <p className="muted">
+                  Ciclo atual até {row.subscriptionCurrentPeriodEnd.toLocaleDateString("pt-BR")}.
+                </p>
+              )}
+              {canManageBilling && (
+                <a className="primary-button subscription-action-link" href={CALORI_STRIPE_PORTAL_LOGIN}>
+                  Gerenciar cobrança
+                </a>
+              )}
             </>
           ) : (
             <>
-              <span className="section-kicker">Cobrança ainda não conectada</span>
-              <h2>Seu trial terminou.</h2>
-              <p>
-                O Calori continuará acessível enquanto a cobrança ainda não estiver integrada.
-                Quando o checkout for conectado, esta tela será o ponto de contratação e cancelamento.
-              </p>
+              <span className="section-kicker">
+                {row.subscriptionStatus === "past_due" ? "Pagamento pendente" : "Trial encerrado"}
+              </span>
+              <h2>
+                {row.subscriptionStatus === "past_due"
+                  ? "Sua assinatura precisa de atenção."
+                  : "Continue usando o Calori por R$ 59/mês."}
+              </h2>
+              {canManageBilling ? (
+                <>
+                  <p>
+                    Todos os recursos continuam no mesmo plano. Você pode contratar agora ou gerenciar
+                    uma assinatura existente pela Stripe.
+                  </p>
+                  <div className="subscription-action-row">
+                    <a className="primary-button subscription-action-link" href={checkoutUrl}>
+                      Assinar o Calori
+                    </a>
+                    {row.stripeCustomerId && (
+                      <a className="secondary-link-button subscription-action-link" href={CALORI_STRIPE_PORTAL_LOGIN}>
+                        Gerenciar cobrança
+                      </a>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p>
+                  A assinatura precisa ser regularizada pelo proprietário do restaurante.
+                </p>
+              )}
             </>
           )}
         </section>
