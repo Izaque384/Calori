@@ -208,13 +208,19 @@ export default async function TablesPage() {
                       )}
 
                       {canManage ? (
-                        <form action={toggleTable}>
-                          <input type="hidden" name="tableId" value={table.id} />
-                          <input type="hidden" name="active" value={String(table.active)} />
-                          <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
-                            {table.active ? "Ativa" : "Pausada"}
-                          </button>
-                        </form>
+                        operation.occupied && table.active ? (
+                          <span className="availability-button on table-active-locked" title="Encerre a visita antes de pausar a mesa.">
+                            Ativa · em uso
+                          </span>
+                        ) : (
+                          <form action={toggleTable}>
+                            <input type="hidden" name="tableId" value={table.id} />
+                            <input type="hidden" name="active" value={String(table.active)} />
+                            <button className={table.active ? "availability-button on" : "availability-button off"} type="submit">
+                              {table.active ? "Ativa" : "Pausada"}
+                            </button>
+                          </form>
+                        )
                       ) : (
                         <span className={table.active ? "availability-button on" : "availability-button off"}>
                           {table.active ? "Ativa" : "Pausada"}
