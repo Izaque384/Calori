@@ -46,6 +46,10 @@ export const restaurants = pgTable(
     trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
     subscriptionStartedAt: timestamp("subscription_started_at", { withTimezone: true }),
     subscriptionCanceledAt: timestamp("subscription_canceled_at", { withTimezone: true }),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    stripePriceId: text("stripe_price_id"),
+    subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -324,4 +328,14 @@ export const apiRateLimits = pgTable(
     primaryKey({ columns: [table.bucketKey, table.windowStart] }),
     index("api_rate_limits_expires_idx").on(table.expiresAt),
   ],
+);
+
+
+export const appSecrets = pgTable(
+  "app_secrets",
+  {
+    key: text("key").primaryKey(),
+    value: text("value").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
 );
