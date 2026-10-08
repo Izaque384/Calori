@@ -5,6 +5,74 @@ import { useRouter } from "next/navigation";
 
 type Purpose = "restaurant-logo" | "restaurant-banner" | "product";
 
+const MAX_SOURCE_SIZE = 16 * 1024 * 1024;
+const MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
+
+async function optimizeImage(file: File, purpose: Purpose) {
+  if (file.size > MAX_SOURCE_SIZE) {
+    throw new Error("A imagem original deve ter no máximo 16 MB.");
+  }
+
+  if (typeof createImageBitmap !== "function") {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+
+  try {
+    const limits =
+      purpose === "restaurant-banner"
+        ? { width: 2000, height: 1200 }
+        : purpose === "restaurant-logo"
+          ? { width: 1200, height: 1200 }
+          : { width: 1600, height: 1600 };
+
+    const scale = Math.min(
+      1,
+      limits.width / bitmap.width,
+      limits.height / bitmap.height,
+    );
+
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    if (
+      scale === 1 &&
+      file.size <= 900 * 1024 &&
+      file.type === "image/webp"
+    ) {
+      return file;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) return file;
+
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    const optimizedBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.84);
+    });
+
+    if (!optimizedBlob) return file;
+
+    if (optimizedBlob.size >= file.size && file.size <= MAX_UPLOAD_SIZE) {
+      return file;
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "imagem";
+    return new File([optimizedBlob], `${baseName}.webp`, {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  } finally {
+    bitmap.close();
+  }
+}
+
 type Props = {
   purpose: Purpose;
   currentUrl?: string | null;
@@ -32,14 +100,34 @@ export default function ImageUpload({
     setBusy(true);
     setMessage("");
 
-    const localPreview = URL.createObjectURL(file);
-    setPreview(localPreview);
+    let localPreview = "";
 
     try {
+      let uploadFile = file;
+
+      try {
+        uploadFile = await optimizeImage(file, purpose);
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível preparar a imagem.",
+        );
+        return;
+      }
+
+      if (uploadFile.size > MAX_UPLOAD_SIZE) {
+        setMessage("A imagem continuou acima de 4 MB após a otimização.");
+        return;
+      }
+
+      localPreview = URL.createObjectURL(uploadFile);
+      setPreview(localPreview);
+
       const formData = new FormData();
       formData.set("purpose", purpose);
       if (productId) formData.set("productId", productId);
-      formData.set("file", file);
+      formData.set("file", uploadFile);
 
       const response = await fetch("/api/dashboard/media", {
         method: "POST",
@@ -60,7 +148,7 @@ export default function ImageUpload({
       setPreview(currentUrl ?? "");
       setMessage("Não foi possível enviar a imagem. Tente novamente.");
     } finally {
-      URL.revokeObjectURL(localPreview);
+      if (localPreview) URL.revokeObjectURL(localPreview);
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
     }
@@ -110,7 +198,7 @@ export default function ImageUpload({
       <div className="media-uploader-copy">
         <strong>{label}</strong>
         {description && <p>{description}</p>}
-        <span>JPG, PNG, WebP ou AVIF · até 4 MB</span>
+        <span>JPG, PNG, WebP ou AVIF · otimização automática</span>
 
         <div className="media-uploader-actions">
           <input
