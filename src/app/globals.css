@@ -3148,3 +3148,66 @@ input:focus, textarea:focus, select:focus {
     width: 100%;
   }
 }
+
+
+/* Monitor do salão */
+.tables-heading-status {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.tables-monitor {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* Relatórios */
+.reports-toolbar {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.report-period-tabs {
+  display: inline-flex;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,253,249,.66);
+}
+.report-period-tabs a {
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.report-period-tabs a.active {
+  background: var(--terracotta);
+  color: white;
+}
+.reports-export-button {
+  min-height: 36px;
+  padding: 9px 12px !important;
+}
+@media (max-width: 700px) {
+  .tables-heading-status {
+    justify-items: start;
+  }
+  .reports-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .report-period-tabs {
+    width: fit-content;
+  }
+  .reports-export-button {
+    width: fit-content;
+  }
+}
