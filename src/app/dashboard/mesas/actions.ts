@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { serviceRequests, tableSessions, tables } from "@/db/schema";
+import { serviceRequests, tableSessions, tableVisits, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageTables } from "@/lib/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
@@ -64,36 +64,53 @@ export async function closeTableVisit(formData: FormData) {
 
   if (!tableId) return;
 
-  const [table] = await db
-    .select({ id: tables.id })
-    .from(tables)
-    .where(and(eq(tables.id, tableId), eq(tables.restaurantId, restaurant.id)))
+  const [visit] = await db
+    .select({ id: tableVisits.id })
+    .from(tableVisits)
+    .where(
+      and(
+        eq(tableVisits.restaurantId, restaurant.id),
+        eq(tableVisits.tableId, tableId),
+        isNull(tableVisits.closedAt),
+      ),
+    )
     .limit(1);
 
-  if (!table) return;
+  if (!visit) return;
 
   const closedAt = new Date();
 
-  await db
-    .update(tableSessions)
-    .set({ expiresAt: closedAt })
-    .where(
-      and(
-        eq(tableSessions.restaurantId, restaurant.id),
-        eq(tableSessions.tableId, table.id),
+  await db.batch([
+    db
+      .update(tableVisits)
+      .set({ closedAt })
+      .where(
+        and(
+          eq(tableVisits.id, visit.id),
+          eq(tableVisits.restaurantId, restaurant.id),
+          isNull(tableVisits.closedAt),
+        ),
       ),
-    );
-
-  await db
-    .update(serviceRequests)
-    .set({ status: "cancelled", handledAt: closedAt })
-    .where(
-      and(
-        eq(serviceRequests.restaurantId, restaurant.id),
-        eq(serviceRequests.tableId, table.id),
-        eq(serviceRequests.status, "pending"),
+    db
+      .update(tableSessions)
+      .set({ expiresAt: closedAt })
+      .where(
+        and(
+          eq(tableSessions.restaurantId, restaurant.id),
+          eq(tableSessions.visitId, visit.id),
+        ),
       ),
-    );
+    db
+      .update(serviceRequests)
+      .set({ status: "cancelled", handledAt: closedAt })
+      .where(
+        and(
+          eq(serviceRequests.restaurantId, restaurant.id),
+          eq(serviceRequests.visitId, visit.id),
+          eq(serviceRequests.status, "pending"),
+        ),
+      ),
+  ]);
 
   revalidatePath("/dashboard/mesas");
   revalidatePath("/dashboard/atendimento");
