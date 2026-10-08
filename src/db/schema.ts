@@ -72,7 +72,7 @@ export const restaurantMembers = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.restaurantId, table.userId] }),
-    index("restaurant_members_user_idx").on(table.userId),
+    uniqueIndex("restaurant_members_one_restaurant_per_user_uq").on(table.userId),
   ],
 );
 
