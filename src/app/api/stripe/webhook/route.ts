@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { appSecrets, restaurants } from "@/db/schema";
+import { appSecrets, restaurants, stripeWebhookEvents } from "@/db/schema";
 import {
   CALORI_STRIPE_PRICE_ID,
   mapStripeSubscriptionStatus,
@@ -105,9 +105,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid payload." }, { status: 400 });
   }
 
+  const eventId = typeof event.id === "string" ? event.id : null;
   const type = typeof event.type === "string" ? event.type : "";
   const data = asObject(event.data);
   const object = asObject(data.object);
+
+  if (!eventId || !type) {
+    return Response.json({ error: "Invalid Stripe event." }, { status: 400 });
+  }
+
+  const [claimed] = await db
+    .insert(stripeWebhookEvents)
+    .values({
+      eventId,
+      eventType: type,
+    })
+    .onConflictDoNothing()
+    .returning({ eventId: stripeWebhookEvents.eventId });
+
+  if (!claimed) {
+    return Response.json({ received: true, duplicate: true });
+  }
 
   try {
     if (type === "checkout.session.completed") {
@@ -203,8 +221,18 @@ export async function POST(request: Request) {
           );
       }
     }
+    await db
+      .update(stripeWebhookEvents)
+      .set({ processedAt: new Date() })
+      .where(eq(stripeWebhookEvents.eventId, eventId));
   } catch (error) {
+    await db
+      .delete(stripeWebhookEvents)
+      .where(eq(stripeWebhookEvents.eventId, eventId))
+      .catch(() => undefined);
+
     console.error("calori.stripe.webhook_failed", {
+      eventId,
       type,
       error: error instanceof Error ? error.message : "unknown",
     });
