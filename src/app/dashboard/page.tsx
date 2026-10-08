@@ -1,8 +1,8 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { orders, restaurantMembers, restaurants, serviceRequests, tableSessions } from "@/db/schema";
+import { orders, products, restaurantMembers, restaurants, serviceRequests, tables, tableVisits } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { and, eq, gt, gte, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getSubscriptionSummary } from "@/lib/subscription";
 
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const [todayRows, inProgressRows, activeTableRows, pendingServiceRows] = await Promise.all([
+  const [todayRows, inProgressRows, activeTableRows, pendingServiceRows, productRows, tableRows, lifetimeOrderRows] = await Promise.all([
     db
       .select({
         count: sql<number>`count(*)::int`,
@@ -73,24 +73,60 @@ export default async function DashboardPage() {
         ),
       ),
     db
-      .select({ count: sql<number>`count(distinct ${tableSessions.tableId})::int` })
-      .from(tableSessions)
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tableVisits)
       .where(
         and(
-          eq(tableSessions.restaurantId, restaurant.id),
-          gt(tableSessions.expiresAt, new Date()),
+          eq(tableVisits.restaurantId, restaurant.id),
+          isNull(tableVisits.closedAt),
         ),
       ),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(serviceRequests)
       .where(and(eq(serviceRequests.restaurantId, restaurant.id), eq(serviceRequests.status, "pending"))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(products)
+      .where(eq(products.restaurantId, restaurant.id)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tables)
+      .where(eq(tables.restaurantId, restaurant.id)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(eq(orders.restaurantId, restaurant.id)),
   ]);
 
   const today = todayRows[0] ?? { count: 0, total: "0" };
   const inProgress = inProgressRows[0]?.count ?? 0;
   const activeTables = activeTableRows[0]?.count ?? 0;
   const pendingService = pendingServiceRows[0]?.count ?? 0;
+  const productCount = productRows[0]?.count ?? 0;
+  const tableCount = tableRows[0]?.count ?? 0;
+  const lifetimeOrderCount = lifetimeOrderRows[0]?.count ?? 0;
+  const activationSteps = [
+    {
+      done: productCount > 0,
+      title: "Cadastre o primeiro produto",
+      description: "Comece pelo item que melhor representa a casa.",
+      href: "/dashboard/cardapio",
+    },
+    {
+      done: tableCount > 0,
+      title: "Crie a primeira mesa",
+      description: "O QR Code será gerado automaticamente.",
+      href: "/dashboard/mesas",
+    },
+    {
+      done: lifetimeOrderCount > 0,
+      title: "Faça um pedido teste",
+      description: "Valide a experiência do cliente antes de colocar no salão.",
+      href: "/dashboard/mesas",
+    },
+  ];
+  const activationComplete = activationSteps.every((step) => step.done);
 
   return (
     <main className="dashboard-shell">
@@ -112,6 +148,30 @@ export default async function DashboardPage() {
             <span>Ver assinatura →</span>
           </a>
         )}
+        {membership.role !== "staff" && !activationComplete && (
+          <section className="activation-card">
+            <div className="activation-card-heading">
+              <div>
+                <span className="section-kicker">Primeiros passos</span>
+                <h2>Prepare o Calori para o primeiro atendimento.</h2>
+              </div>
+              <span>{activationSteps.filter((step) => step.done).length}/3 concluídos</span>
+            </div>
+            <div className="activation-steps">
+              {activationSteps.map((step, index) => (
+                <a className={step.done ? "done" : ""} href={step.href} key={step.title}>
+                  <span>{step.done ? "✓" : index + 1}</span>
+                  <div>
+                    <strong>{step.title}</strong>
+                    <small>{step.description}</small>
+                  </div>
+                  <b>→</b>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="dashboard-quick-actions">
           <a href="/dashboard/pedidos">
             <span>Operação</span>
