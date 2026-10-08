@@ -2,7 +2,7 @@ import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
 import { orders, products, restaurantMembers, restaurants, serviceRequests, tables, tableVisits } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getSubscriptionSummary } from "@/lib/subscription";
 
@@ -83,6 +83,7 @@ export default async function DashboardPage() {
         and(
           eq(tableVisits.restaurantId, restaurant.id),
           isNull(tableVisits.closedAt),
+          gt(tableVisits.expiresAt, new Date()),
         ),
       ),
     db
