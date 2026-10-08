@@ -5,17 +5,13 @@ import { db } from "@/db";
 import { products, restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { canManageCatalog, canManageSettings } from "@/lib/permissions";
+import { ALLOWED_IMAGE_TYPES, hasValidImageSignature } from "@/lib/image-validation";
 
 export const runtime = "nodejs";
 // Vercel injects Blob credentials into each deployment after the store is connected.
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-]);
+const ALLOWED_TYPES = new Set<string>(ALLOWED_IMAGE_TYPES);
 
 type MediaPurpose = "restaurant-logo" | "restaurant-banner" | "product";
 
@@ -70,6 +66,17 @@ export async function POST(request: Request) {
   if (!ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json(
       { error: "Use uma imagem JPG, PNG, WebP ou AVIF." },
+      { status: 415 },
+    );
+  }
+
+  const signatureBytes = new Uint8Array(
+    await file.slice(0, 64).arrayBuffer(),
+  );
+
+  if (!hasValidImageSignature(file.type, signatureBytes)) {
+    return NextResponse.json(
+      { error: "O arquivo enviado não corresponde a uma imagem válida." },
       { status: 415 },
     );
   }
