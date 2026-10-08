@@ -273,3 +273,8 @@ DO $$ BEGIN
       CHECK (price >= 0);
   END IF;
 END $$;
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS service_requests_one_pending_per_visit_type_uq
+  ON service_requests (restaurant_id, visit_id, type)
+  WHERE status = 'pending' AND visit_id IS NOT NULL;
