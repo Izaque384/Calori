@@ -6,7 +6,7 @@ import { restaurantMembers, teamInvites } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageSettings } from "@/lib/permissions";
 import { hashInviteToken } from "@/lib/team-invites";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export type InviteState = {
@@ -40,6 +40,22 @@ export async function createTeamInvite(
   if (email === session.user.email?.toLowerCase()) {
     return { error: "Você já faz parte deste restaurante." };
   }
+
+  if (email.length > 254) {
+    return { error: "O e-mail informado é muito longo." };
+  }
+
+  await db
+    .update(teamInvites)
+    .set({ status: "expired" })
+    .where(
+      and(
+        eq(teamInvites.restaurantId, restaurant.id),
+        eq(teamInvites.email, email),
+        eq(teamInvites.status, "pending"),
+        lte(teamInvites.expiresAt, new Date()),
+      ),
+    );
 
   const [member] = await db
     .select({ userId: restaurantMembers.userId })
@@ -76,14 +92,22 @@ export async function createTeamInvite(
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  await db.insert(teamInvites).values({
-    restaurantId: restaurant.id,
-    email,
-    role: invitedRole,
-    tokenHash: hashInviteToken(token),
-    invitedByUserId: session.user.id,
-    expiresAt,
-  });
+  const [created] = await db
+    .insert(teamInvites)
+    .values({
+      restaurantId: restaurant.id,
+      email,
+      role: invitedRole,
+      tokenHash: hashInviteToken(token),
+      invitedByUserId: session.user.id,
+      expiresAt,
+    })
+    .onConflictDoNothing()
+    .returning({ id: teamInvites.id });
+
+  if (!created) {
+    return { error: "Já existe um convite ativo para esse e-mail." };
+  }
 
   const inviteUrl = `${appUrl()}/convite/${token}`;
 
