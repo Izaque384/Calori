@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { restaurants } from "@/db/schema";
+import { appSecrets, restaurants } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { formatCaloriMonthlyPrice, getSubscriptionSummary } from "@/lib/subscription";
 import { buildCaloriCheckoutUrl, CALORI_STRIPE_PORTAL_LOGIN } from "@/lib/stripe-billing";
@@ -20,8 +20,9 @@ function statusLabel(status: string, trialActive: boolean) {
 export default async function SubscriptionPage() {
   const { restaurant, role, session } = await requireCurrentRestaurant({ allowExpiredSubscription: true });
 
-  const [row] = await db
-    .select({
+  const [[row], [checkoutSecret]] = await Promise.all([
+    db
+      .select({
       subscriptionStatus: restaurants.subscriptionStatus,
       trialEndsAt: restaurants.trialEndsAt,
       subscriptionStartedAt: restaurants.subscriptionStartedAt,
@@ -31,10 +32,16 @@ export default async function SubscriptionPage() {
       subscriptionCurrentPeriodEnd: restaurants.subscriptionCurrentPeriodEnd,
     })
     .from(restaurants)
-    .where(eq(restaurants.id, restaurant.id))
-    .limit(1);
+      .where(eq(restaurants.id, restaurant.id))
+      .limit(1),
+    db
+      .select({ value: appSecrets.value })
+      .from(appSecrets)
+      .where(eq(appSecrets.key, "stripe_checkout_reference_secret"))
+      .limit(1),
+  ]);
 
-  if (!row) redirect("/dashboard");
+  if (!row || !checkoutSecret) redirect("/dashboard");
 
   const summary = getSubscriptionSummary({
     status: row.subscriptionStatus,
@@ -43,6 +50,7 @@ export default async function SubscriptionPage() {
 
   const checkoutUrl = buildCaloriCheckoutUrl({
     restaurantId: restaurant.id,
+    referenceSecret: checkoutSecret.value,
     email: session.user.email,
   });
   const canManageBilling = role === "owner";
