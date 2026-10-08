@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { categories, optionGroups, options, products } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageCatalog } from "@/lib/permissions";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { del } from "@vercel/blob";
 
@@ -92,6 +92,21 @@ export async function createCategory(formData: FormData) {
   const name = boundedText(formData.get("name"), 80, "Nome da categoria");
 
   if (!name) return;
+
+  const [duplicateCategory] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(
+      and(
+        eq(categories.restaurantId, restaurant.id),
+        sql`lower(trim(${categories.name})) = lower(trim(${name}))`,
+      ),
+    )
+    .limit(1);
+
+  if (duplicateCategory) {
+    throw new Error("Já existe uma categoria com esse nome.");
+  }
 
   const [lastCategory] = await db
     .select({ sortOrder: categories.sortOrder })
@@ -309,6 +324,22 @@ export async function updateCategoryName(formData: FormData) {
   const name = boundedText(formData.get("name"), 80, "Nome da categoria");
 
   if (!categoryId || !name || !(await assertCategoryOwnership(categoryId, restaurant.id))) return;
+
+  const [duplicateCategory] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(
+      and(
+        eq(categories.restaurantId, restaurant.id),
+        ne(categories.id, categoryId),
+        sql`lower(trim(${categories.name})) = lower(trim(${name}))`,
+      ),
+    )
+    .limit(1);
+
+  if (duplicateCategory) {
+    throw new Error("Já existe uma categoria com esse nome.");
+  }
 
   await db
     .update(categories)
