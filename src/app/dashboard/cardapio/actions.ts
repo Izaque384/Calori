@@ -23,6 +23,18 @@ function normalizeImageUrl(value: FormDataEntryValue | null) {
   }
 }
 
+function boundedText(
+  value: FormDataEntryValue | null,
+  maxLength: number,
+  label: string,
+) {
+  const text = String(value ?? "").trim();
+  if (text.length > maxLength) {
+    throw new Error(`${label} deve ter no máximo ${maxLength} caracteres.`);
+  }
+  return text;
+}
+
 function moneyToDatabase(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "")
     .trim()
@@ -31,7 +43,7 @@ function moneyToDatabase(value: FormDataEntryValue | null) {
 
   const amount = Number(normalized);
 
-  if (!Number.isFinite(amount) || amount < 0) {
+  if (!Number.isFinite(amount) || amount < 0 || amount > 999999.99) {
     throw new Error("Preço inválido");
   }
 
@@ -77,7 +89,7 @@ async function assertProductOwnership(productId: string, restaurantId: string) {
 export async function createCategory(formData: FormData) {
   const { restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageCatalog(role));
-  const name = String(formData.get("name") ?? "").trim();
+  const name = boundedText(formData.get("name"), 80, "Nome da categoria");
 
   if (!name) return;
 
@@ -115,8 +127,8 @@ export async function createProduct(formData: FormData) {
   const { restaurant, role } = await requireCurrentRestaurant();
   assertPermission(canManageCatalog(role));
 
-  const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const name = boundedText(formData.get("name"), 120, "Nome do produto");
+  const description = boundedText(formData.get("description"), 600, "Descrição");
   const categoryId = String(formData.get("categoryId") ?? "").trim();
   const imageUrl = normalizeImageUrl(formData.get("imageUrl"));
   const price = moneyToDatabase(formData.get("price"));
@@ -198,9 +210,9 @@ export async function createOptionGroup(formData: FormData) {
   assertPermission(canManageCatalog(role));
 
   const productId = String(formData.get("productId") ?? "");
-  const name = String(formData.get("groupName") ?? "").trim();
+  const name = boundedText(formData.get("groupName"), 120, "Nome do grupo");
   const required = formData.get("required") === "on";
-  const maxSelections = Math.max(1, Number(formData.get("maxSelections") ?? 1) || 1);
+  const maxSelections = Math.min(20, Math.max(1, Number(formData.get("maxSelections") ?? 1) || 1));
 
   if (!productId || !name || !(await assertProductOwnership(productId, restaurant.id))) return;
 
@@ -220,7 +232,7 @@ export async function createOption(formData: FormData) {
   assertPermission(canManageCatalog(role));
 
   const groupId = String(formData.get("groupId") ?? "");
-  const name = String(formData.get("optionName") ?? "").trim();
+  const name = boundedText(formData.get("optionName"), 120, "Nome da opção");
   const additionalPrice = moneyToDatabase(formData.get("additionalPrice"));
 
   if (!groupId || !name) return;
@@ -294,7 +306,7 @@ export async function updateCategoryName(formData: FormData) {
   assertPermission(canManageCatalog(role));
 
   const categoryId = String(formData.get("categoryId") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
+  const name = boundedText(formData.get("name"), 80, "Nome da categoria");
 
   if (!categoryId || !name || !(await assertCategoryOwnership(categoryId, restaurant.id))) return;
 
@@ -311,8 +323,8 @@ export async function updateProductDetails(formData: FormData) {
   assertPermission(canManageCatalog(role));
 
   const productId = String(formData.get("productId") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const name = boundedText(formData.get("name"), 120, "Nome do produto");
+  const description = boundedText(formData.get("description"), 600, "Descrição");
   const categoryId = String(formData.get("categoryId") ?? "").trim();
   const price = moneyToDatabase(formData.get("price"));
 
