@@ -27,6 +27,13 @@ type OrderPayload = {
   note?: string;
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
+}
+
 function money(value: string | number) {
   return Number(Number(value).toFixed(2));
 }
@@ -46,7 +53,16 @@ export async function POST(request: Request) {
   const requestKey = String(payload.requestKey ?? "").trim();
   const items = Array.isArray(payload.items) ? payload.items : [];
 
-  if (!restaurantSlug || !tableCode || !sessionToken || requestKey.length < 8 || requestKey.length > 100 || items.length === 0) {
+  if (
+    !restaurantSlug ||
+    restaurantSlug.length > 160 ||
+    !tableCode ||
+    tableCode.length > 64 ||
+    !/^[a-f0-9]{64}$/i.test(sessionToken) ||
+    requestKey.length < 8 ||
+    requestKey.length > 100 ||
+    items.length === 0
+  ) {
     return Response.json({ error: "O carrinho está vazio ou a mesa é inválida." }, { status: 400 });
   }
 
@@ -103,6 +119,22 @@ export async function POST(request: Request) {
 
   const productIds = [...new Set(items.map((item) => String(item.productId ?? "")))];
 
+  if (productIds.some((id) => !isUuid(id))) {
+    return Response.json({ error: "Há um produto inválido no pedido." }, { status: 400 });
+  }
+
+  const rawOptionIds = items.flatMap((item) =>
+    Array.isArray(item.optionIds) ? item.optionIds.map(String) : [],
+  );
+
+  if (
+    items.some((item) => Array.isArray(item.optionIds) && item.optionIds.length > 40) ||
+    rawOptionIds.length > 400 ||
+    rawOptionIds.some((id) => !isUuid(id))
+  ) {
+    return Response.json({ error: "Há opções inválidas no pedido." }, { status: 400 });
+  }
+
   const productRows = await db
     .select({
       id: products.id,
@@ -116,13 +148,7 @@ export async function POST(request: Request) {
 
   const productMap = new Map(productRows.map((product) => [product.id, product]));
 
-  const allOptionIds = [
-    ...new Set(
-      items.flatMap((item) =>
-        Array.isArray(item.optionIds) ? item.optionIds.map(String) : [],
-      ),
-    ),
-  ];
+  const allOptionIds = [...new Set(rawOptionIds)];
 
   const optionRows = allOptionIds.length
     ? await db
