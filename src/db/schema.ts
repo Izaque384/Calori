@@ -126,6 +126,8 @@ export const tables = pgTable(
   },
   (table) => [
     uniqueIndex("tables_public_code_uq").on(table.publicCode),
+    uniqueIndex("tables_restaurant_normalized_name_uq")
+      .on(table.restaurantId, sql`lower(trim(${table.name}))`),
     index("tables_restaurant_idx").on(table.restaurantId),
   ],
 );
