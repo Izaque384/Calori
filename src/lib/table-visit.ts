@@ -1,6 +1,61 @@
 import { db } from "@/db";
-import { tableVisits } from "@/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { serviceRequests, tableSessions, tableVisits } from "@/db/schema";
+import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
+
+export const TABLE_VISIT_DURATION_MS = 12 * 60 * 60 * 1000;
+
+export async function closeExpiredTableVisits(restaurantId: string) {
+  const now = new Date();
+
+  const expired = await db
+    .select({ id: tableVisits.id })
+    .from(tableVisits)
+    .where(
+      and(
+        eq(tableVisits.restaurantId, restaurantId),
+        isNull(tableVisits.closedAt),
+        lte(tableVisits.expiresAt, now),
+      ),
+    );
+
+  if (expired.length === 0) return [];
+
+  const visitIds = expired.map((visit) => visit.id);
+
+  await db.batch([
+    db
+      .update(tableVisits)
+      .set({ closedAt: now })
+      .where(
+        and(
+          eq(tableVisits.restaurantId, restaurantId),
+          inArray(tableVisits.id, visitIds),
+          isNull(tableVisits.closedAt),
+        ),
+      ),
+    db
+      .update(tableSessions)
+      .set({ expiresAt: now })
+      .where(
+        and(
+          eq(tableSessions.restaurantId, restaurantId),
+          inArray(tableSessions.visitId, visitIds),
+        ),
+      ),
+    db
+      .update(serviceRequests)
+      .set({ status: "cancelled", handledAt: now })
+      .where(
+        and(
+          eq(serviceRequests.restaurantId, restaurantId),
+          inArray(serviceRequests.visitId, visitIds),
+          eq(serviceRequests.status, "pending"),
+        ),
+      ),
+  ]);
+
+  return visitIds;
+}
 
 export async function getOpenTableVisit(params: {
   restaurantId: string;
@@ -10,6 +65,7 @@ export async function getOpenTableVisit(params: {
     .select({
       id: tableVisits.id,
       openedAt: tableVisits.openedAt,
+      expiresAt: tableVisits.expiresAt,
     })
     .from(tableVisits)
     .where(
@@ -17,6 +73,7 @@ export async function getOpenTableVisit(params: {
         eq(tableVisits.restaurantId, params.restaurantId),
         eq(tableVisits.tableId, params.tableId),
         isNull(tableVisits.closedAt),
+        gt(tableVisits.expiresAt, new Date()),
       ),
     )
     .limit(1);
@@ -28,8 +85,12 @@ export async function getOrCreateOpenTableVisit(params: {
   restaurantId: string;
   tableId: string;
 }) {
+  await closeExpiredTableVisits(params.restaurantId);
+
   const existing = await getOpenTableVisit(params);
   if (existing) return existing;
+
+  const expiresAt = new Date(Date.now() + TABLE_VISIT_DURATION_MS);
 
   try {
     const [created] = await db
@@ -37,16 +98,18 @@ export async function getOrCreateOpenTableVisit(params: {
       .values({
         restaurantId: params.restaurantId,
         tableId: params.tableId,
+        expiresAt,
       })
       .onConflictDoNothing()
       .returning({
         id: tableVisits.id,
         openedAt: tableVisits.openedAt,
+        expiresAt: tableVisits.expiresAt,
       });
 
     if (created) return created;
   } catch {
-    // Another device may have opened the same table visit concurrently.
+    // Outro dispositivo pode ter aberto a mesma visita simultaneamente.
   }
 
   const concurrent = await getOpenTableVisit(params);
