@@ -52,3 +52,7 @@ CREATE INDEX IF NOT EXISTS table_visits_open_restaurant_expires_idx
 
 CREATE UNIQUE INDEX IF NOT EXISTS tables_restaurant_normalized_name_uq
   ON tables (restaurant_id, lower(btrim(name)));
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS categories_restaurant_normalized_name_uq
+  ON categories (restaurant_id, lower(btrim(name)));
