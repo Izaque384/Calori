@@ -205,3 +205,11 @@ BEGIN
   RETURN QUERY SELECT v_order_id, v_number, false;
 END;
 $$;
+
+
+CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+  event_id text PRIMARY KEY,
+  event_type text NOT NULL,
+  received_at timestamptz NOT NULL DEFAULT now(),
+  processed_at timestamptz
+);
