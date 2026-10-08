@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   numeric,
@@ -200,6 +201,7 @@ export const products = pgTable(
   (table) => [
     index("products_restaurant_idx").on(table.restaurantId),
     index("products_category_idx").on(table.categoryId),
+    check("products_price_nonnegative_ck", sql`${table.price} >= 0`),
   ],
 );
 
@@ -216,7 +218,13 @@ export const optionGroups = pgTable(
     maxSelections: integer("max_selections").notNull().default(1),
     sortOrder: integer("sort_order").notNull().default(0),
   },
-  (table) => [index("option_groups_product_idx").on(table.productId)],
+  (table) => [
+    index("option_groups_product_idx").on(table.productId),
+    check(
+      "option_groups_selection_bounds_ck",
+      sql`${table.minSelections} >= 0 and ${table.maxSelections} >= 1 and ${table.minSelections} <= ${table.maxSelections}`,
+    ),
+  ],
 );
 
 export const options = pgTable(
@@ -233,7 +241,10 @@ export const options = pgTable(
     available: boolean("available").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),
   },
-  (table) => [index("options_group_idx").on(table.groupId)],
+  (table) => [
+    index("options_group_idx").on(table.groupId),
+    check("options_price_nonnegative_ck", sql`${table.additionalPrice} >= 0`),
+  ],
 );
 
 export const orders = pgTable(
@@ -262,6 +273,10 @@ export const orders = pgTable(
     index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
     index("orders_table_idx").on(table.tableId),
     index("orders_visit_idx").on(table.visitId),
+    check(
+      "orders_totals_nonnegative_ck",
+      sql`${table.subtotal} >= 0 and ${table.total} >= 0`,
+    ),
   ],
 );
 
@@ -279,7 +294,13 @@ export const orderItems = pgTable(
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
     note: text("note"),
   },
-  (table) => [index("order_items_order_idx").on(table.orderId)],
+  (table) => [
+    index("order_items_order_idx").on(table.orderId),
+    check(
+      "order_items_values_ck",
+      sql`${table.quantity} >= 1 and ${table.unitPrice} >= 0 and ${table.subtotal} >= 0`,
+    ),
+  ],
 );
 
 export const orderItemOptions = pgTable(
@@ -293,7 +314,13 @@ export const orderItemOptions = pgTable(
     name: text("name").notNull(),
     price: numeric("price", { precision: 12, scale: 2 }).notNull().default("0"),
   },
-  (table) => [index("order_item_options_item_idx").on(table.orderItemId)],
+  (table) => [
+    index("order_item_options_item_idx").on(table.orderItemId),
+    check(
+      "order_item_options_price_nonnegative_ck",
+      sql`${table.price} >= 0`,
+    ),
+  ],
 );
 
 export const serviceRequests = pgTable(
