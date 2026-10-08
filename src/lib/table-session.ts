@@ -28,6 +28,7 @@ export async function getValidTableSession(params: {
         eq(tableSessions.restaurantId, params.restaurantId),
         eq(tableSessions.tableId, params.tableId),
         gt(tableSessions.expiresAt, new Date()),
+        gt(tableVisits.expiresAt, new Date()),
         isNull(tableVisits.closedAt),
       ),
     )
