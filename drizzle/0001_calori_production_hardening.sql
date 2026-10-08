@@ -232,3 +232,44 @@ CREATE TABLE IF NOT EXISTS stripe_webhook_events (
 
 CREATE UNIQUE INDEX IF NOT EXISTS restaurant_members_one_restaurant_per_user_uq
   ON restaurant_members (user_id);
+
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='products_price_nonnegative_ck') THEN
+    ALTER TABLE products ADD CONSTRAINT products_price_nonnegative_ck CHECK (price >= 0);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='options_price_nonnegative_ck') THEN
+    ALTER TABLE options ADD CONSTRAINT options_price_nonnegative_ck CHECK (additional_price >= 0);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='option_groups_selection_bounds_ck') THEN
+    ALTER TABLE option_groups ADD CONSTRAINT option_groups_selection_bounds_ck
+      CHECK (min_selections >= 0 AND max_selections >= 1 AND min_selections <= max_selections);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='order_items_values_ck') THEN
+    ALTER TABLE order_items ADD CONSTRAINT order_items_values_ck
+      CHECK (quantity >= 1 AND unit_price >= 0 AND subtotal >= 0);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='orders_totals_nonnegative_ck') THEN
+    ALTER TABLE orders ADD CONSTRAINT orders_totals_nonnegative_ck
+      CHECK (subtotal >= 0 AND total >= 0);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='order_item_options_price_nonnegative_ck') THEN
+    ALTER TABLE order_item_options ADD CONSTRAINT order_item_options_price_nonnegative_ck
+      CHECK (price >= 0);
+  END IF;
+END $$;
