@@ -3,6 +3,7 @@ import { appSecrets, restaurants } from "@/db/schema";
 import {
   CALORI_STRIPE_PRICE_ID,
   mapStripeSubscriptionStatus,
+  verifyCheckoutReference,
   verifyStripeSignature,
 } from "@/lib/stripe-billing";
 import { and, eq, or } from "drizzle-orm";
@@ -50,22 +51,25 @@ function priceIdFromSubscription(object: StripeLikeObject) {
   return stringId(first.price) ?? CALORI_STRIPE_PRICE_ID;
 }
 
-async function findWebhookSecret() {
-  const [secret] = await db
-    .select({ value: appSecrets.value })
-    .from(appSecrets)
-    .where(eq(appSecrets.key, "stripe_webhook_secret"))
-    .limit(1);
+async function findStripeSecrets() {
+  const rows = await db
+    .select({ key: appSecrets.key, value: appSecrets.value })
+    .from(appSecrets);
 
-  return secret?.value ?? null;
+  return {
+    webhookSecret:
+      rows.find((row) => row.key === "stripe_webhook_secret")?.value ?? null,
+    checkoutReferenceSecret:
+      rows.find((row) => row.key === "stripe_checkout_reference_secret")?.value ?? null,
+  };
 }
 
 export async function POST(request: Request) {
   const payload = await request.text();
   const signatureHeader = request.headers.get("stripe-signature") ?? "";
-  const secret = await findWebhookSecret();
+  const { webhookSecret, checkoutReferenceSecret } = await findStripeSecrets();
 
-  if (!secret || !signatureHeader) {
+  if (!webhookSecret || !checkoutReferenceSecret || !signatureHeader) {
     return Response.json({ error: "Webhook not configured." }, { status: 503 });
   }
 
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
     !verifyStripeSignature({
       payload,
       signatureHeader,
-      secret,
+      secret: webhookSecret,
     })
   ) {
     return Response.json({ error: "Invalid signature." }, { status: 400 });
@@ -92,10 +96,16 @@ export async function POST(request: Request) {
 
   try {
     if (type === "checkout.session.completed") {
-      const restaurantId =
+      const checkoutReference =
         typeof object.client_reference_id === "string"
           ? object.client_reference_id
           : null;
+      const restaurantId = checkoutReference
+        ? verifyCheckoutReference({
+            reference: checkoutReference,
+            secret: checkoutReferenceSecret,
+          })
+        : null;
       const customerId = stringId(object.customer);
       const subscriptionId = stringId(object.subscription);
       const paymentStatus =
