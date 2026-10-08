@@ -439,19 +439,17 @@ export async function moveCategory(formData: FormData) {
     reordered[index],
   ];
 
-  await db.batch(
-    reordered.map((row, sortOrder) =>
-      db
-        .update(categories)
-        .set({ sortOrder: sortOrder + 1 })
-        .where(
-          and(
-            eq(categories.id, row.id),
-            eq(categories.restaurantId, restaurant.id),
-          ),
+  for (const [sortOrder, row] of reordered.entries()) {
+    await db
+      .update(categories)
+      .set({ sortOrder: sortOrder + 1 })
+      .where(
+        and(
+          eq(categories.id, row.id),
+          eq(categories.restaurantId, restaurant.id),
         ),
-    ),
-  );
+      );
+  }
 
   revalidatePath("/dashboard/cardapio");
 }
@@ -483,19 +481,17 @@ export async function moveProduct(formData: FormData) {
     reordered[index],
   ];
 
-  await db.batch(
-    reordered.map((row, sortOrder) =>
-      db
-        .update(products)
-        .set({ sortOrder: sortOrder + 1, updatedAt: new Date() })
-        .where(
-          and(
-            eq(products.id, row.id),
-            eq(products.restaurantId, restaurant.id),
-          ),
+  for (const [sortOrder, row] of reordered.entries()) {
+    await db
+      .update(products)
+      .set({ sortOrder: sortOrder + 1, updatedAt: new Date() })
+      .where(
+        and(
+          eq(products.id, row.id),
+          eq(products.restaurantId, restaurant.id),
         ),
-    ),
-  );
+      );
+  }
 
   revalidatePath("/dashboard/cardapio");
 }
