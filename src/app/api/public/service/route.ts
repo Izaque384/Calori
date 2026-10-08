@@ -25,7 +25,15 @@ export async function POST(request: Request) {
   const sessionToken = String(payload.sessionToken ?? "").trim();
   const type = payload.type;
 
-  if (!restaurantSlug || !tableCode || !sessionToken || !type || !["call_waiter", "request_bill"].includes(type)) {
+  if (
+    !restaurantSlug ||
+    restaurantSlug.length > 160 ||
+    !tableCode ||
+    tableCode.length > 64 ||
+    !/^[a-f0-9]{64}$/i.test(sessionToken) ||
+    !type ||
+    !["call_waiter", "request_bill"].includes(type)
+  ) {
     return Response.json({ error: "Dados inválidos." }, { status: 400 });
   }
 
@@ -97,14 +105,29 @@ export async function POST(request: Request) {
     });
   }
 
-  await db.insert(serviceRequests).values({
-    restaurantId: restaurant.id,
-    tableId: table.id,
-    sessionId: tableSession.id,
-    visitId: tableSession.visitId,
-    type,
-    status: "pending",
-  });
+  const [created] = await db
+    .insert(serviceRequests)
+    .values({
+      restaurantId: restaurant.id,
+      tableId: table.id,
+      sessionId: tableSession.id,
+      visitId: tableSession.visitId,
+      type,
+      status: "pending",
+    })
+    .onConflictDoNothing()
+    .returning({ id: serviceRequests.id });
+
+  if (!created) {
+    return Response.json({
+      ok: true,
+      duplicate: true,
+      message:
+        type === "call_waiter"
+          ? "O garçom já foi chamado."
+          : "A conta já foi solicitada.",
+    });
+  }
 
   return Response.json({
     ok: true,
