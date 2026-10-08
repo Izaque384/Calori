@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { appSecrets, restaurants, stripeWebhookEvents } from "@/db/schema";
+import { restaurants, stripeWebhookEvents } from "@/db/schema";
 import {
   CALORI_STRIPE_PRICE_ID,
   mapStripeSubscriptionStatus,
@@ -51,38 +51,18 @@ function priceIdFromSubscription(object: StripeLikeObject) {
   return stringId(first.price) ?? CALORI_STRIPE_PRICE_ID;
 }
 
-async function findStripeSecrets() {
-  const envWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? null;
-  const envCheckoutReferenceSecret =
-    process.env.STRIPE_CHECKOUT_REFERENCE_SECRET ?? null;
-
-  if (envWebhookSecret && envCheckoutReferenceSecret) {
-    return {
-      webhookSecret: envWebhookSecret,
-      checkoutReferenceSecret: envCheckoutReferenceSecret,
-    };
-  }
-
-  const rows = await db
-    .select({ key: appSecrets.key, value: appSecrets.value })
-    .from(appSecrets);
-
+function findStripeSecrets() {
   return {
-    webhookSecret:
-      envWebhookSecret ??
-      rows.find((row) => row.key === "stripe_webhook_secret")?.value ??
-      null,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? null,
     checkoutReferenceSecret:
-      envCheckoutReferenceSecret ??
-      rows.find((row) => row.key === "stripe_checkout_reference_secret")?.value ??
-      null,
+      process.env.STRIPE_CHECKOUT_REFERENCE_SECRET ?? null,
   };
 }
 
 export async function POST(request: Request) {
   const payload = await request.text();
   const signatureHeader = request.headers.get("stripe-signature") ?? "";
-  const { webhookSecret, checkoutReferenceSecret } = await findStripeSecrets();
+  const { webhookSecret, checkoutReferenceSecret } = findStripeSecrets();
 
   if (!webhookSecret || !checkoutReferenceSecret || !signatureHeader) {
     return Response.json({ error: "Webhook not configured." }, { status: 503 });
