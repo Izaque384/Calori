@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
 import PublicMenuClient from "./menu-client";
+import { getSubscriptionSummary } from "@/lib/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,30 @@ export default async function PublicMenuPage({ params }: Props) {
       bannerUrl: restaurants.bannerUrl,
       phone: restaurants.phone,
       address: restaurants.address,
+      subscriptionStatus: restaurants.subscriptionStatus,
+      trialEndsAt: restaurants.trialEndsAt,
     })
     .from(restaurants)
     .where(and(eq(restaurants.slug, restaurante), eq(restaurants.active, true)))
     .limit(1);
 
   if (!restaurant) notFound();
+
+  const subscription = getSubscriptionSummary({
+    status: restaurant.subscriptionStatus,
+    trialEndsAt: restaurant.trialEndsAt,
+  });
+
+  if (!subscription.hasAccess) {
+    return (
+      <main className="public-menu-shell">
+        <div className="public-empty public-subscription-unavailable">
+          <strong>Cardápio temporariamente indisponível.</strong>
+          <span>O restaurante está atualizando o acesso ao Calori.</span>
+        </div>
+      </main>
+    );
+  }
 
   const [table] = await db
     .select({ id: tables.id, name: tables.name, publicCode: tables.publicCode })
