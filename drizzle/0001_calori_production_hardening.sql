@@ -278,3 +278,12 @@ END $$;
 CREATE UNIQUE INDEX IF NOT EXISTS service_requests_one_pending_per_visit_type_uq
   ON service_requests (restaurant_id, visit_id, type)
   WHERE status = 'pending' AND visit_id IS NOT NULL;
+
+
+UPDATE team_invites
+SET status='expired'
+WHERE status='pending' AND expires_at <= now();
+
+CREATE UNIQUE INDEX IF NOT EXISTS team_invites_one_pending_per_email_uq
+  ON team_invites (restaurant_id, email)
+  WHERE status='pending';
