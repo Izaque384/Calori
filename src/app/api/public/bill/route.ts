@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { orders, restaurants, tables } from "@/db/schema";
 import { getValidTableSession } from "@/lib/table-session";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { and, asc, eq, ne } from "drizzle-orm";
 
 export async function GET(request: Request) {
@@ -9,7 +10,13 @@ export async function GET(request: Request) {
   const tableCode = String(url.searchParams.get("tableCode") ?? "").trim();
   const sessionToken = String(url.searchParams.get("sessionToken") ?? "").trim();
 
-  if (!restaurantSlug || !tableCode || !sessionToken) {
+  if (
+    !restaurantSlug ||
+    restaurantSlug.length > 160 ||
+    !tableCode ||
+    tableCode.length > 64 ||
+    !/^[a-f0-9]{64}$/i.test(sessionToken)
+  ) {
     return Response.json({ error: "Sessão da mesa inválida." }, { status: 400 });
   }
 
@@ -55,6 +62,14 @@ export async function GET(request: Request) {
   if (!tableSession.visitId) {
     return Response.json({ error: "Visita da mesa inválida." }, { status: 401 });
   }
+
+  const limit = await checkRateLimit({
+    scope: "table-bill",
+    identity: tableSession.visitId,
+    limit: 30,
+    windowMs: 60 * 1000,
+  });
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
   const rows = await db
     .select({
