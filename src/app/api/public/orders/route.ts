@@ -1,16 +1,15 @@
-import { db } from "@/db";
+import { db, sqlClient } from "@/db";
 import {
   optionGroups,
   options,
-  orderItemOptions,
-  orderItems,
   orders,
   products,
   restaurants,
   tables,
 } from "@/db/schema";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getValidTableSession } from "@/lib/table-session";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 type CartItemInput = {
   productId: string;
@@ -23,6 +22,7 @@ type OrderPayload = {
   restaurantSlug?: string;
   tableCode?: string;
   sessionToken?: string;
+  requestKey?: string;
   items?: CartItemInput[];
   note?: string;
 };
@@ -43,9 +43,10 @@ export async function POST(request: Request) {
   const restaurantSlug = String(payload.restaurantSlug ?? "").trim();
   const tableCode = String(payload.tableCode ?? "").trim();
   const sessionToken = String(payload.sessionToken ?? "").trim();
+  const requestKey = String(payload.requestKey ?? "").trim();
   const items = Array.isArray(payload.items) ? payload.items : [];
 
-  if (!restaurantSlug || !tableCode || !sessionToken || items.length === 0) {
+  if (!restaurantSlug || !tableCode || !sessionToken || requestKey.length < 8 || requestKey.length > 100 || items.length === 0) {
     return Response.json({ error: "O carrinho está vazio ou a mesa é inválida." }, { status: 400 });
   }
 
@@ -85,12 +86,20 @@ export async function POST(request: Request) {
     tableId: table.id,
   });
 
-  if (!tableSession) {
+  if (!tableSession?.visitId) {
     return Response.json(
       { error: "Sua sessão da mesa expirou. Reabra o cardápio pelo QR Code." },
       { status: 401 },
     );
   }
+
+  const limit = await checkRateLimit({
+    scope: "table-orders",
+    identity: tableSession.visitId,
+    limit: 12,
+    windowMs: 60 * 1000,
+  });
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
   const productIds = [...new Set(items.map((item) => String(item.productId ?? "")))];
 
@@ -224,70 +233,45 @@ export async function POST(request: Request) {
   const subtotal = money(normalizedItems.reduce((sum, item) => sum + item.subtotal, 0));
   const total = subtotal;
 
-  const [lastOrder] = await db
-    .select({ number: orders.number })
-    .from(orders)
-    .where(eq(orders.restaurantId, restaurant.id))
-    .orderBy(desc(orders.number))
-    .limit(1);
+  let createdOrder: { id: string; number: number; reused: boolean } | null = null;
 
-  let nextNumber = (lastOrder?.number ?? 0) + 1;
-  let createdOrder: { id: string; number: number } | undefined;
+  try {
+    const rows = await sqlClient`
+      SELECT order_id, order_number, reused
+      FROM create_calori_order(
+        ${restaurant.id}::uuid,
+        ${table.id}::uuid,
+        ${tableSession.visitId}::uuid,
+        ${tableSession.id}::uuid,
+        ${requestKey},
+        ${subtotal.toFixed(2)}::numeric,
+        ${total.toFixed(2)}::numeric,
+        ${String(payload.note ?? "").trim().slice(0, 500) || null},
+        ${JSON.stringify(normalizedItems)}::jsonb
+      )
+    `;
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      [createdOrder] = await db
-        .insert(orders)
-        .values({
-          restaurantId: restaurant.id,
-          tableId: table.id,
-          sessionId: tableSession.id,
-          number: nextNumber,
-          status: "new",
-          subtotal: subtotal.toFixed(2),
-          total: total.toFixed(2),
-          note: String(payload.note ?? "").trim().slice(0, 500) || null,
-        })
-        .returning({ id: orders.id, number: orders.number });
+    const row = rows[0] as
+      | { order_id?: string; order_number?: number; reused?: boolean }
+      | undefined;
 
-      break;
-    } catch {
-      nextNumber += 1;
+    if (row?.order_id && Number.isFinite(Number(row.order_number))) {
+      createdOrder = {
+        id: row.order_id,
+        number: Number(row.order_number),
+        reused: Boolean(row.reused),
+      };
     }
+  } catch (error) {
+    console.error("calori.order.create_failed", {
+      restaurantId: restaurant.id,
+      tableId: table.id,
+      visitId: tableSession.visitId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
   }
 
   if (!createdOrder) {
-    return Response.json({ error: "Não conseguimos criar o pedido. Tente novamente." }, { status: 500 });
-  }
-
-  try {
-    for (const item of normalizedItems) {
-      const [createdItem] = await db
-        .insert(orderItems)
-        .values({
-          orderId: createdOrder.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toFixed(2),
-          subtotal: item.subtotal.toFixed(2),
-          note: item.note,
-        })
-        .returning({ id: orderItems.id });
-
-      if (item.selectedOptions.length) {
-        await db.insert(orderItemOptions).values(
-          item.selectedOptions.map((option) => ({
-            orderItemId: createdItem.id,
-            optionId: option.id,
-            name: option.name,
-            price: option.price.toFixed(2),
-          })),
-        );
-      }
-    }
-  } catch {
-    await db.delete(orders).where(eq(orders.id, createdOrder.id));
     return Response.json({ error: "Não conseguimos concluir o pedido. Tente novamente." }, { status: 500 });
   }
 
@@ -297,6 +281,7 @@ export async function POST(request: Request) {
       id: createdOrder.id,
       number: createdOrder.number,
       status: "new",
+      reused: createdOrder.reused,
       total,
       table: table.name,
     },
