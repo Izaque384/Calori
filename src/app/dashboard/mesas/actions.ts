@@ -15,17 +15,21 @@ export async function createTable(formData: FormData) {
 
   if (!name) return;
 
-  let publicCode = "";
+  let publicCode: string | null = null;
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    publicCode = randomBytes(4).toString("hex").toUpperCase();
+    const candidate = randomBytes(4).toString("hex").toUpperCase();
 
     const [existing] = await db
       .select({ id: tables.id })
       .from(tables)
-      .where(eq(tables.publicCode, publicCode))
+      .where(eq(tables.publicCode, candidate))
       .limit(1);
 
-    if (!existing) break;
+    if (!existing) {
+      publicCode = candidate;
+      break;
+    }
   }
 
   if (!publicCode) throw new Error("Não foi possível gerar o código da mesa.");
