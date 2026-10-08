@@ -3107,3 +3107,44 @@ input:focus, textarea:focus, select:focus {
     flex-direction: column;
   }
 }
+
+
+/* Assinatura e cobrança */
+.subscription-inline-note {
+  margin-top: 14px !important;
+  padding: 12px 14px;
+  border: 1px solid rgba(198,90,58,.16);
+  border-radius: 11px;
+  background: rgba(198,90,58,.055);
+  color: var(--terracotta-dark);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.subscription-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+  margin-top: 18px;
+}
+.subscription-action-link {
+  min-height: 38px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px !important;
+  text-decoration: none;
+}
+.public-subscription-unavailable {
+  width: min(calc(100% - 40px), 560px);
+  margin: 120px auto 0;
+}
+@media (max-width: 560px) {
+  .subscription-action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .subscription-action-link {
+    width: 100%;
+  }
+}
