@@ -22,14 +22,24 @@ function startOfDaysAgo(days: number) {
   return date;
 }
 
-export default async function ReportsPage() {
+type Props = {
+  searchParams: Promise<{ period?: string }>;
+};
+
+function resolvePeriod(value: string | undefined) {
+  return value === "7" || value === "90" ? Number(value) : 30;
+}
+
+export default async function ReportsPage({ searchParams }: Props) {
+  const { period: periodParam } = await searchParams;
+  const period = resolvePeriod(periodParam);
   const { restaurant, role } = await requireCurrentRestaurant();
   if (!canViewReports(role)) redirect("/dashboard/pedidos");
 
   const start7 = startOfDaysAgo(6);
-  const start30 = startOfDaysAgo(29);
+  const startPeriod = startOfDaysAgo(period - 1);
 
-  const [summary7Rows, summary30Rows, recentOrders, topProducts] = await Promise.all([
+  const [summaryRows, recentOrders, topProducts] = await Promise.all([
     db
       .select({
         count: sql<number>`count(*)::int`,
@@ -40,21 +50,7 @@ export default async function ReportsPage() {
       .where(
         and(
           eq(orders.restaurantId, restaurant.id),
-          gte(orders.createdAt, start7),
-          ne(orders.status, "cancelled"),
-        ),
-      ),
-    db
-      .select({
-        count: sql<number>`count(*)::int`,
-        total: sql<string>`coalesce(sum(${orders.total}), 0)::text`,
-        average: sql<string>`coalesce(avg(${orders.total}), 0)::text`,
-      })
-      .from(orders)
-      .where(
-        and(
-          eq(orders.restaurantId, restaurant.id),
-          gte(orders.createdAt, start30),
+          gte(orders.createdAt, startPeriod),
           ne(orders.status, "cancelled"),
         ),
       ),
@@ -70,7 +66,7 @@ export default async function ReportsPage() {
       .where(
         and(
           eq(orders.restaurantId, restaurant.id),
-          gte(orders.createdAt, start30),
+          gte(orders.createdAt, startPeriod),
           ne(orders.status, "cancelled"),
         ),
       )
@@ -86,7 +82,7 @@ export default async function ReportsPage() {
       .where(
         and(
           eq(orders.restaurantId, restaurant.id),
-          gte(orders.createdAt, start30),
+          gte(orders.createdAt, startPeriod),
           ne(orders.status, "cancelled"),
         ),
       )
@@ -95,8 +91,8 @@ export default async function ReportsPage() {
       .limit(8),
   ]);
 
-  const summary7 = summary7Rows[0] ?? { count: 0, total: "0", average: "0" };
-  const summary30 = summary30Rows[0] ?? { count: 0, total: "0", average: "0" };
+  const summary = summaryRows[0] ?? { count: 0, total: "0", average: "0" };
+  const dailyAverage = Number(summary.total) / period;
 
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(start7);
@@ -132,11 +128,31 @@ export default async function ReportsPage() {
           </div>
         </div>
 
+        <div className="reports-toolbar">
+          <nav className="report-period-tabs" aria-label="Período do relatório">
+            {[7, 30, 90].map((days) => (
+              <a
+                className={period === days ? "active" : ""}
+                href={`/dashboard/relatorios?period=${days}`}
+                key={days}
+              >
+                {days} dias
+              </a>
+            ))}
+          </nav>
+          <a
+            className="secondary-link-button reports-export-button"
+            href={`/api/dashboard/reports.csv?period=${period}`}
+          >
+            Exportar CSV
+          </a>
+        </div>
+
         <div className="metric-grid reports-metrics">
-          <article><span>Pedidos · 7 dias</span><strong>{summary7.count}</strong></article>
-          <article><span>Volume · 7 dias</span><strong>{formatMoney(summary7.total)}</strong></article>
-          <article><span>Ticket médio · 30 dias</span><strong>{formatMoney(summary30.average)}</strong></article>
-          <article><span>Volume · 30 dias</span><strong>{formatMoney(summary30.total)}</strong></article>
+          <article><span>Pedidos · {period} dias</span><strong>{summary.count}</strong></article>
+          <article><span>Volume · {period} dias</span><strong>{formatMoney(summary.total)}</strong></article>
+          <article><span>Ticket médio · {period} dias</span><strong>{formatMoney(summary.average)}</strong></article>
+          <article><span>Média diária · {period} dias</span><strong>{formatMoney(dailyAverage)}</strong></article>
         </div>
 
         <section className="reports-card">
@@ -167,7 +183,7 @@ export default async function ReportsPage() {
         <section className="reports-card">
           <div className="section-title">
             <div>
-              <span className="section-kicker">Últimos 30 dias</span>
+              <span className="section-kicker">Últimos {period} dias</span>
               <h2>Itens mais vendidos</h2>
             </div>
           </div>
