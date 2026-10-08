@@ -52,15 +52,30 @@ function priceIdFromSubscription(object: StripeLikeObject) {
 }
 
 async function findStripeSecrets() {
+  const envWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? null;
+  const envCheckoutReferenceSecret =
+    process.env.STRIPE_CHECKOUT_REFERENCE_SECRET ?? null;
+
+  if (envWebhookSecret && envCheckoutReferenceSecret) {
+    return {
+      webhookSecret: envWebhookSecret,
+      checkoutReferenceSecret: envCheckoutReferenceSecret,
+    };
+  }
+
   const rows = await db
     .select({ key: appSecrets.key, value: appSecrets.value })
     .from(appSecrets);
 
   return {
     webhookSecret:
-      rows.find((row) => row.key === "stripe_webhook_secret")?.value ?? null,
+      envWebhookSecret ??
+      rows.find((row) => row.key === "stripe_webhook_secret")?.value ??
+      null,
     checkoutReferenceSecret:
-      rows.find((row) => row.key === "stripe_checkout_reference_secret")?.value ?? null,
+      envCheckoutReferenceSecret ??
+      rows.find((row) => row.key === "stripe_checkout_reference_secret")?.value ??
+      null,
   };
 }
 
