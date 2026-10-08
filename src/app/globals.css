@@ -3021,3 +3021,89 @@ input:focus, textarea:focus, select:focus {
     border-radius: 0 0 18px 18px;
   }
 }
+
+
+/* Ativação do restaurante */
+.activation-card {
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid rgba(198,90,58,.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(198,90,58,.075), rgba(255,253,249,.8));
+}
+.activation-card-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+.activation-card-heading h2 {
+  margin: 4px 0 0;
+  max-width: 560px;
+  font-family: var(--font-display), "Playfair Display", Georgia, serif;
+  font-size: 28px;
+  font-weight: 560;
+  letter-spacing: -.035em;
+}
+.activation-card-heading > span {
+  color: var(--terracotta-dark);
+  font-size: 9px;
+  font-weight: 850;
+}
+.activation-steps {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+}
+.activation-steps a {
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,253,249,.82);
+  color: inherit;
+  text-decoration: none;
+}
+.activation-steps a > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(198,90,58,.10);
+  color: var(--terracotta-dark);
+  font-size: 10px;
+  font-weight: 850;
+}
+.activation-steps a.done > span {
+  background: rgba(79,120,89,.12);
+  color: var(--success);
+}
+.activation-steps a > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.activation-steps strong { font-size: 10px; }
+.activation-steps small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.activation-steps b {
+  color: #a39489;
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .activation-steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .activation-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
