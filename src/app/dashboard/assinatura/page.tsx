@@ -41,7 +41,10 @@ export default async function SubscriptionPage() {
       .limit(1),
   ]);
 
-  if (!row || !checkoutSecret) redirect("/dashboard");
+  const checkoutReferenceSecret =
+    process.env.STRIPE_CHECKOUT_REFERENCE_SECRET ?? checkoutSecret?.value ?? null;
+
+  if (!row || !checkoutReferenceSecret) redirect("/dashboard");
 
   const summary = getSubscriptionSummary({
     status: row.subscriptionStatus,
@@ -50,7 +53,7 @@ export default async function SubscriptionPage() {
 
   const checkoutUrl = buildCaloriCheckoutUrl({
     restaurantId: restaurant.id,
-    referenceSecret: checkoutSecret.value,
+    referenceSecret: checkoutReferenceSecret,
     email: session.user.email,
   });
   const canManageBilling = role === "owner";
