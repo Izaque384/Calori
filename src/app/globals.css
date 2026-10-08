@@ -3211,3 +3211,33 @@ input:focus, textarea:focus, select:focus {
     width: fit-content;
   }
 }
+
+
+/* Ordenação do cardápio */
+.catalog-order-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.catalog-order-controls form {
+  display: inline-flex;
+}
+.catalog-order-button {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,253,249,.82);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+.catalog-order-button:hover {
+  border-color: rgba(198,90,58,.35);
+  color: var(--terracotta-dark);
+  background: rgba(198,90,58,.06);
+}
