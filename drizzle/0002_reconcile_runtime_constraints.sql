@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS stripe_webhook_events (
   received_at timestamptz NOT NULL DEFAULT now(),
   processed_at timestamptz
 );
+
+
+CREATE INDEX IF NOT EXISTS orders_restaurant_created_idx
+  ON orders (restaurant_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS service_requests_restaurant_status_created_idx
+  ON service_requests (restaurant_id, status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS table_visits_open_restaurant_expires_idx
+  ON table_visits (restaurant_id, expires_at)
+  WHERE closed_at IS NULL;
