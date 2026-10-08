@@ -46,6 +46,10 @@ export default async function DashboardPage() {
     trialEndsAt: restaurant.trialEndsAt,
   });
 
+  if (!subscription.hasAccess) {
+    redirect("/dashboard/assinatura?locked=1");
+  }
+
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
