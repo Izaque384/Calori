@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import {
   buildCaloriCheckoutUrl,
+  createCheckoutReference,
   mapStripeSubscriptionStatus,
+  verifyCheckoutReference,
   verifyStripeSignature,
 } from "../src/lib/stripe-billing.ts";
 
@@ -11,12 +13,36 @@ test("checkout URL carries restaurant reference and owner email", () => {
   const url = new URL(
     buildCaloriCheckoutUrl({
       restaurantId: "restaurant-123",
+      referenceSecret: "checkout-secret",
       email: "owner@example.com",
     }),
   );
 
-  assert.equal(url.searchParams.get("client_reference_id"), "restaurant-123");
+  const reference = url.searchParams.get("client_reference_id");
+  assert.ok(reference);
+  assert.equal(
+    verifyCheckoutReference({
+      reference,
+      secret: "checkout-secret",
+    }),
+    "restaurant-123",
+  );
   assert.equal(url.searchParams.get("prefilled_email"), "owner@example.com");
+});
+
+test("tampered checkout reference is rejected", () => {
+  const reference = createCheckoutReference({
+    restaurantId: "restaurant-123",
+    secret: "checkout-secret",
+  });
+
+  assert.equal(
+    verifyCheckoutReference({
+      reference: reference.replace("restaurant-123", "restaurant-999"),
+      secret: "checkout-secret",
+    }),
+    null,
+  );
 });
 
 test("Stripe webhook signature is verified with timestamp tolerance", () => {
