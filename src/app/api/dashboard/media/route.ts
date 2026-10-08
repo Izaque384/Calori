@@ -140,7 +140,14 @@ export async function POST(request: Request) {
     await deleteBlobBestEffort(previousUrl);
 
     return NextResponse.json({ url: blob.url });
-  } catch {
+  } catch (error) {
+    console.error("calori.media.upload_failed", {
+      restaurantId: restaurant.id,
+      purpose: purposeRaw,
+      productId: productId || null,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+
     return NextResponse.json(
       {
         error:
