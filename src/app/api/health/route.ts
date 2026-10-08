@@ -19,12 +19,21 @@ export async function GET() {
     });
   }
 
-  const blobAuthConfigured = Boolean(
-    process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_OIDC_TOKEN,
+  const mediaConfigured = Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN ||
+      process.env.VERCEL_OIDC_TOKEN ||
+      process.env.BLOB_STORE_ID,
   );
 
+  const billingConfigured = Boolean(
+    process.env.STRIPE_WEBHOOK_SECRET &&
+      process.env.STRIPE_CHECKOUT_REFERENCE_SECRET,
+  );
+
+  const ok = databaseOk && mediaConfigured && billingConfigured;
+
   const body = {
-    ok: databaseOk,
+    ok,
     app: "calori",
     version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? "local",
     checkedAt: new Date().toISOString(),
@@ -35,13 +44,16 @@ export async function GET() {
         latencyMs: databaseLatencyMs,
       },
       mediaStorage: {
-        configured: blobAuthConfigured,
+        configured: mediaConfigured,
+      },
+      billing: {
+        configured: billingConfigured,
       },
     },
   };
 
   return Response.json(body, {
-    status: databaseOk ? 200 : 503,
+    status: ok ? 200 : 503,
     headers: { "cache-control": "no-store" },
   });
 }
