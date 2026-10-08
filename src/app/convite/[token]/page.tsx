@@ -66,6 +66,12 @@ export default async function InvitePage({ params, searchParams }: Props) {
           <p className="form-error">Entre com o mesmo e-mail que recebeu o convite.</p>
         )}
 
+        {query.erro === "restaurante" && (
+          <p className="form-error">
+            Esta conta já está vinculada a outro restaurante no Calori. O convite continua válido e pode ser aceito por uma conta sem restaurante.
+          </p>
+        )}
+
         {session?.user ? (
           <>
             <div className="invite-signed-user">
