@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canOperate } from "@/lib/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 const nextStatus: Record<string, "preparing" | "ready" | "delivered"> = {
@@ -34,7 +34,13 @@ export async function advanceOrder(formData: FormData) {
   await db
     .update(orders)
     .set({ status, updatedAt: new Date() })
-    .where(and(eq(orders.id, order.id), eq(orders.restaurantId, restaurant.id)));
+    .where(
+      and(
+        eq(orders.id, order.id),
+        eq(orders.restaurantId, restaurant.id),
+        eq(orders.status, order.status),
+      ),
+    );
 
   revalidatePath("/dashboard/pedidos");
   revalidatePath("/dashboard");
@@ -50,7 +56,13 @@ export async function cancelOrder(formData: FormData) {
   await db
     .update(orders)
     .set({ status: "cancelled", updatedAt: new Date() })
-    .where(and(eq(orders.id, orderId), eq(orders.restaurantId, restaurant.id)));
+    .where(
+      and(
+        eq(orders.id, orderId),
+        eq(orders.restaurantId, restaurant.id),
+        inArray(orders.status, ["new", "preparing", "ready"]),
+      ),
+    );
 
   revalidatePath("/dashboard/pedidos");
   revalidatePath("/dashboard");
