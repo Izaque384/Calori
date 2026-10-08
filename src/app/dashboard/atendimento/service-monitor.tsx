@@ -97,6 +97,7 @@ export default function ServiceMonitor({ initialRequests }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
 
     async function poll() {
       try {
@@ -125,15 +126,30 @@ export default function ServiceMonitor({ initialRequests }: Props) {
 
         knownIds.current = currentIds;
       } catch {
-        // Mantém o painel funcional mesmo se uma rodada de polling falhar.
+        // Mantém o painel funcional mesmo se uma rodada de atualização falhar.
+      } finally {
+        if (!cancelled) {
+          timer = window.setTimeout(
+            poll,
+            document.visibilityState === "visible" ? 5000 : 30000,
+          );
+        }
       }
     }
 
-    const timer = window.setInterval(poll, 5000);
+    function handleVisibility() {
+      if (document.visibilityState !== "visible" || cancelled) return;
+      if (timer) window.clearTimeout(timer);
+      void poll();
+    }
+
+    timer = window.setTimeout(poll, 5000);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [router, soundEnabled]);
 
@@ -158,7 +174,7 @@ export default function ServiceMonitor({ initialRequests }: Props) {
         {soundEnabled ? "Alertas sonoros ativos" : "Ativar alertas sonoros"}
       </button>
 
-      <span className="monitor-status">Atualização automática a cada 5s</span>
+      <span className="monitor-status">Atualização automática</span>
 
       {newRequest && (
         <button
