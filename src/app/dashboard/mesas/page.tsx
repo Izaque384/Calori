@@ -1,8 +1,8 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { orders, tableSessions, tables } from "@/db/schema";
+import { orders, tableVisits, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import Link from "next/link";
 import { closeTableVisit, createTable, toggleTable } from "./actions";
 
@@ -25,29 +25,28 @@ export default async function TablesPage() {
     .where(eq(tables.restaurantId, restaurant.id))
     .orderBy(asc(tables.name));
 
-  const activeSessions = await db
+  const openVisits = await db
     .select({
-      id: tableSessions.id,
-      tableId: tableSessions.tableId,
-      createdAt: tableSessions.createdAt,
-      expiresAt: tableSessions.expiresAt,
+      id: tableVisits.id,
+      tableId: tableVisits.tableId,
+      openedAt: tableVisits.openedAt,
     })
-    .from(tableSessions)
+    .from(tableVisits)
     .where(
       and(
-        eq(tableSessions.restaurantId, restaurant.id),
-        gt(tableSessions.expiresAt, new Date()),
+        eq(tableVisits.restaurantId, restaurant.id),
+        isNull(tableVisits.closedAt),
       ),
     )
-    .orderBy(asc(tableSessions.createdAt));
+    .orderBy(asc(tableVisits.openedAt));
 
-  const activeSessionIds = activeSessions.map((session) => session.id);
+  const openVisitIds = openVisits.map((visit) => visit.id);
 
-  const activeOrders = activeSessionIds.length
+  const activeOrders = openVisitIds.length
     ? await db
         .select({
           tableId: orders.tableId,
-          sessionId: orders.sessionId,
+          visitId: orders.visitId,
           total: orders.total,
           status: orders.status,
         })
@@ -55,7 +54,7 @@ export default async function TablesPage() {
         .where(
           and(
             eq(orders.restaurantId, restaurant.id),
-            inArray(orders.sessionId, activeSessionIds),
+            inArray(orders.visitId, openVisitIds),
             ne(orders.status, "cancelled"),
           ),
         )
@@ -73,16 +72,15 @@ export default async function TablesPage() {
   >();
 
   for (const table of rows) {
-    const sessions = activeSessions.filter((session) => session.tableId === table.id);
-    const sessionIds = new Set(sessions.map((session) => session.id));
-    const tableOrders = activeOrders.filter(
-      (order) => order.sessionId && sessionIds.has(order.sessionId),
-    );
+    const visit = openVisits.find((item) => item.tableId === table.id) ?? null;
+    const tableOrders = visit
+      ? activeOrders.filter((order) => order.visitId === visit.id)
+      : [];
 
     operationalByTable.set(table.id, {
-      occupied: sessions.length > 0,
-      startedAt: sessions[0]?.createdAt ?? null,
-      sessionCount: sessions.length,
+      occupied: Boolean(visit),
+      startedAt: visit?.openedAt ?? null,
+      sessionCount: 0,
       orderCount: tableOrders.length,
       total: tableOrders.reduce((sum, order) => sum + Number(order.total), 0),
     });
@@ -181,7 +179,7 @@ export default async function TablesPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="table-free-copy">Nenhuma sessão ativa nesta mesa.</p>
+                      <p className="table-free-copy">Nenhuma visita aberta nesta mesa.</p>
                     )}
 
                     <div className="table-card-actions">
