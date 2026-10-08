@@ -2,7 +2,8 @@ import { db } from "@/db";
 import { orders, restaurantMembers, restaurants, tableVisits } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
 import { getSubscriptionSummary } from "@/lib/subscription";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { closeExpiredTableVisits } from "@/lib/table-visit";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 
 export async function GET() {
   const { data: session } = await auth.getSession();
@@ -42,6 +43,8 @@ export async function GET() {
     return Response.json({ error: "Assinatura inativa." }, { status: 402 });
   }
 
+  await closeExpiredTableVisits(membership.restaurantId);
+
   const rows = await db
     .select({
       id: tableVisits.id,
@@ -56,6 +59,7 @@ export async function GET() {
       and(
         eq(tableVisits.restaurantId, membership.restaurantId),
         isNull(tableVisits.closedAt),
+        gt(tableVisits.expiresAt, new Date()),
       ),
     )
     .groupBy(tableVisits.id, tableVisits.tableId, tableVisits.openedAt)
