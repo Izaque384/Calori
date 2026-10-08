@@ -5,7 +5,7 @@ import { serviceRequests, tableSessions, tableVisits, tables } from "@/db/schema
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageTables } from "@/lib/permissions";
 import { closeExpiredTableVisits } from "@/lib/table-visit";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
@@ -17,6 +17,21 @@ export async function createTable(formData: FormData) {
   if (!name) return;
   if (name.length > 80) {
     throw new Error("O nome da mesa deve ter no máximo 80 caracteres.");
+  }
+
+  const [duplicateName] = await db
+    .select({ id: tables.id })
+    .from(tables)
+    .where(
+      and(
+        eq(tables.restaurantId, restaurant.id),
+        sql`lower(trim(${tables.name})) = lower(trim(${name}))`,
+      ),
+    )
+    .limit(1);
+
+  if (duplicateName) {
+    throw new Error("Já existe uma mesa com esse nome.");
   }
 
   let publicCode: string | null = null;
