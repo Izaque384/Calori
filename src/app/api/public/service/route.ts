@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { restaurants, serviceRequests, tables } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getValidTableSession } from "@/lib/table-session";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 type Payload = {
   restaurantSlug?: string;
@@ -60,12 +61,20 @@ export async function POST(request: Request) {
     tableId: table.id,
   });
 
-  if (!tableSession) {
+  if (!tableSession?.visitId) {
     return Response.json(
       { error: "Sua sessão da mesa expirou. Reabra o cardápio pelo QR Code." },
       { status: 401 },
     );
   }
+
+  const limit = await checkRateLimit({
+    scope: "table-service",
+    identity: tableSession.visitId,
+    limit: 8,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
   const [existing] = await db
     .select({ id: serviceRequests.id })
@@ -73,7 +82,7 @@ export async function POST(request: Request) {
     .where(
       and(
         eq(serviceRequests.restaurantId, restaurant.id),
-        eq(serviceRequests.tableId, table.id),
+        eq(serviceRequests.visitId, tableSession.visitId),
         eq(serviceRequests.type, type),
         eq(serviceRequests.status, "pending"),
       ),
@@ -92,6 +101,7 @@ export async function POST(request: Request) {
     restaurantId: restaurant.id,
     tableId: table.id,
     sessionId: tableSession.id,
+    visitId: tableSession.visitId,
     type,
     status: "pending",
   });
