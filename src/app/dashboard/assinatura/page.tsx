@@ -127,10 +127,16 @@ export default async function SubscriptionPage() {
                     uma assinatura existente pela Stripe.
                   </p>
                   <div className="subscription-action-row">
-                    <a className="primary-button subscription-action-link" href={checkoutUrl}>
-                      Assinar o Calori
-                    </a>
-                    {row.stripeCustomerId && (
+                    {row.subscriptionStatus === "past_due" && row.stripeCustomerId ? (
+                      <a className="primary-button subscription-action-link" href={CALORI_STRIPE_PORTAL_LOGIN}>
+                        Corrigir pagamento
+                      </a>
+                    ) : (
+                      <a className="primary-button subscription-action-link" href={checkoutUrl}>
+                        Assinar o Calori
+                      </a>
+                    )}
+                    {row.subscriptionStatus !== "past_due" && row.stripeCustomerId && (
                       <a className="secondary-link-button subscription-action-link" href={CALORI_STRIPE_PORTAL_LOGIN}>
                         Gerenciar cobrança
                       </a>
