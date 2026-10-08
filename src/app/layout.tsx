@@ -15,8 +15,23 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Calori",
+  title: {
+    default: "Calori",
+    template: "%s · Calori",
+  },
   description: "A experiência digital do seu restaurante.",
+  applicationName: "Calori",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Calori",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
