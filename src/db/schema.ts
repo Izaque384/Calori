@@ -150,6 +150,9 @@ export const tableVisits = pgTable(
     index("table_visits_restaurant_idx").on(table.restaurantId),
     index("table_visits_table_idx").on(table.tableId),
     index("table_visits_expires_idx").on(table.expiresAt),
+    index("table_visits_open_restaurant_expires_idx")
+      .on(table.restaurantId, table.expiresAt)
+      .where(sql`${table.closedAt} is null`),
     uniqueIndex("table_visits_one_open_per_table_uq")
       .on(table.restaurantId, table.tableId)
       .where(sql`${table.closedAt} is null`),
@@ -288,6 +291,7 @@ export const orders = pgTable(
       .on(table.restaurantId, table.requestKey)
       .where(sql`${table.requestKey} is not null`),
     index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
+    index("orders_restaurant_created_idx").on(table.restaurantId, table.createdAt),
     index("orders_table_idx").on(table.tableId),
     index("orders_visit_idx").on(table.visitId),
     check(
@@ -359,6 +363,8 @@ export const serviceRequests = pgTable(
   },
   (table) => [
     index("service_requests_restaurant_status_idx").on(table.restaurantId, table.status),
+    index("service_requests_restaurant_status_created_idx")
+      .on(table.restaurantId, table.status, table.createdAt),
     index("service_requests_table_idx").on(table.tableId),
     index("service_requests_visit_idx").on(table.visitId),
     uniqueIndex("service_requests_one_pending_per_visit_type_uq")
