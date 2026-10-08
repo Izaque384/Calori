@@ -113,6 +113,25 @@ export const tables = pgTable(
   ],
 );
 
+export const tableVisits = pgTable(
+  "table_visits",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    restaurantId: uuid("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id, { onDelete: "cascade" }),
+    tableId: uuid("table_id")
+      .notNull()
+      .references(() => tables.id, { onDelete: "cascade" }),
+    openedAt: timestamp("opened_at", { withTimezone: true }).notNull().defaultNow(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("table_visits_restaurant_idx").on(table.restaurantId),
+    index("table_visits_table_idx").on(table.tableId),
+  ],
+);
+
 export const tableSessions = pgTable(
   "table_sessions",
   {
@@ -123,6 +142,7 @@ export const tableSessions = pgTable(
     tableId: uuid("table_id")
       .notNull()
       .references(() => tables.id, { onDelete: "cascade" }),
+    visitId: uuid("visit_id").references(() => tableVisits.id, { onDelete: "set null" }),
     tokenHash: text("token_hash").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -131,6 +151,7 @@ export const tableSessions = pgTable(
     uniqueIndex("table_sessions_token_hash_uq").on(table.tokenHash),
     index("table_sessions_restaurant_idx").on(table.restaurantId),
     index("table_sessions_table_idx").on(table.tableId),
+    index("table_sessions_visit_idx").on(table.visitId),
   ],
 );
 
@@ -217,6 +238,8 @@ export const orders = pgTable(
       .notNull()
       .references(() => tables.id, { onDelete: "restrict" }),
     sessionId: uuid("session_id").references(() => tableSessions.id, { onDelete: "set null" }),
+    visitId: uuid("visit_id").references(() => tableVisits.id, { onDelete: "set null" }),
+    requestKey: text("request_key"),
     number: integer("number").notNull(),
     status: orderStatus("status").notNull().default("new"),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
@@ -229,6 +252,7 @@ export const orders = pgTable(
     uniqueIndex("orders_restaurant_number_uq").on(table.restaurantId, table.number),
     index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
     index("orders_table_idx").on(table.tableId),
+    index("orders_visit_idx").on(table.visitId),
   ],
 );
 
@@ -274,6 +298,7 @@ export const serviceRequests = pgTable(
       .notNull()
       .references(() => tables.id, { onDelete: "cascade" }),
     sessionId: uuid("session_id").references(() => tableSessions.id, { onDelete: "set null" }),
+    visitId: uuid("visit_id").references(() => tableVisits.id, { onDelete: "set null" }),
     type: serviceRequestType("type").notNull(),
     status: serviceRequestStatus("status").notNull().default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -282,5 +307,21 @@ export const serviceRequests = pgTable(
   (table) => [
     index("service_requests_restaurant_status_idx").on(table.restaurantId, table.status),
     index("service_requests_table_idx").on(table.tableId),
+    index("service_requests_visit_idx").on(table.visitId),
+  ],
+);
+
+
+export const apiRateLimits = pgTable(
+  "api_rate_limits",
+  {
+    bucketKey: text("bucket_key").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull().default(1),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.bucketKey, table.windowStart] }),
+    index("api_rate_limits_expires_idx").on(table.expiresAt),
   ],
 );
