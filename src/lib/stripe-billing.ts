@@ -4,12 +4,59 @@ export const CALORI_STRIPE_PRICE_ID = "price_1UOGO6ADIPgNEfyPUBvksSl9";
 export const CALORI_STRIPE_PAYMENT_LINK = "https://buy.stripe.com/bJedR8epV3FUcQrcJd3VC00";
 export const CALORI_STRIPE_PORTAL_LOGIN = "https://billing.stripe.com/p/login/bJedR8epV3FUcQrcJd3VC00";
 
+export function createCheckoutReference(params: {
+  restaurantId: string;
+  secret: string;
+}) {
+  const signature = createHmac("sha256", params.secret)
+    .update(params.restaurantId)
+    .digest("hex");
+  return `${params.restaurantId}.${signature}`;
+}
+
+export function verifyCheckoutReference(params: {
+  reference: string;
+  secret: string;
+}) {
+  const separator = params.reference.lastIndexOf(".");
+  if (separator <= 0) return null;
+
+  const restaurantId = params.reference.slice(0, separator);
+  const supplied = params.reference.slice(separator + 1);
+  const expected = createHmac("sha256", params.secret)
+    .update(restaurantId)
+    .digest("hex");
+
+  try {
+    const suppliedBuffer = Buffer.from(supplied, "hex");
+    const expectedBuffer = Buffer.from(expected, "hex");
+
+    if (
+      suppliedBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(suppliedBuffer, expectedBuffer)
+    ) {
+      return null;
+    }
+
+    return restaurantId;
+  } catch {
+    return null;
+  }
+}
+
 export function buildCaloriCheckoutUrl(params: {
   restaurantId: string;
+  referenceSecret: string;
   email?: string | null;
 }) {
   const url = new URL(CALORI_STRIPE_PAYMENT_LINK);
-  url.searchParams.set("client_reference_id", params.restaurantId);
+  url.searchParams.set(
+    "client_reference_id",
+    createCheckoutReference({
+      restaurantId: params.restaurantId,
+      secret: params.referenceSecret,
+    }),
+  );
   if (params.email) url.searchParams.set("prefilled_email", params.email);
   return url.toString();
 }
