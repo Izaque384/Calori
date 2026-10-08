@@ -37,26 +37,48 @@ export async function acceptTeamInvite(formData: FormData) {
     redirect(`/convite/${token}?erro=email`);
   }
 
-  const existing = await db
+  const [existing] = await db
     .select({ restaurantId: restaurantMembers.restaurantId })
     .from(restaurantMembers)
     .where(eq(restaurantMembers.userId, session.user.id))
     .limit(1);
 
-  if (existing.length === 0) {
-    await db.insert(restaurantMembers).values({
-      restaurantId: invite.restaurantId,
-      userId: session.user.id,
-      role: invite.role,
-      email: invite.email,
-      displayName: session.user.name || null,
-    });
+  if (existing && existing.restaurantId !== invite.restaurantId) {
+    redirect(`/convite/${token}?erro=restaurante`);
   }
 
-  await db
-    .update(teamInvites)
-    .set({ status: "accepted", acceptedAt: new Date() })
-    .where(eq(teamInvites.id, invite.id));
+  const acceptedAt = new Date();
+
+  if (!existing) {
+    await db.batch([
+      db.insert(restaurantMembers).values({
+        restaurantId: invite.restaurantId,
+        userId: session.user.id,
+        role: invite.role,
+        email: invite.email,
+        displayName: session.user.name || null,
+      }),
+      db
+        .update(teamInvites)
+        .set({ status: "accepted", acceptedAt })
+        .where(
+          and(
+            eq(teamInvites.id, invite.id),
+            eq(teamInvites.status, "pending"),
+          ),
+        ),
+    ]);
+  } else {
+    await db
+      .update(teamInvites)
+      .set({ status: "accepted", acceptedAt })
+      .where(
+        and(
+          eq(teamInvites.id, invite.id),
+          eq(teamInvites.status, "pending"),
+        ),
+      );
+  }
 
   redirect("/dashboard");
 }
