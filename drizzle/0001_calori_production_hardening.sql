@@ -228,3 +228,7 @@ CREATE TABLE IF NOT EXISTS stripe_webhook_events (
   received_at timestamptz NOT NULL DEFAULT now(),
   processed_at timestamptz
 );
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS restaurant_members_one_restaurant_per_user_uq
+  ON restaurant_members (user_id);
