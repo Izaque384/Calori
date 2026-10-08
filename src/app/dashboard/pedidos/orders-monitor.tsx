@@ -25,6 +25,7 @@ export default function OrdersMonitor({ initialOrders }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
 
     async function poll() {
       try {
@@ -64,14 +65,29 @@ export default function OrdersMonitor({ initialOrders }: Props) {
         );
       } catch {
         // Uma falha isolada não interrompe o painel.
+      } finally {
+        if (!cancelled) {
+          timer = window.setTimeout(
+            poll,
+            document.visibilityState === "visible" ? 5000 : 30000,
+          );
+        }
       }
     }
 
-    const timer = window.setInterval(poll, 5000);
+    function handleVisibility() {
+      if (document.visibilityState !== "visible" || cancelled) return;
+      if (timer) window.clearTimeout(timer);
+      void poll();
+    }
+
+    timer = window.setTimeout(poll, 5000);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [router]);
 
