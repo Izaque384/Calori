@@ -6,6 +6,7 @@ import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageCatalog } from "@/lib/permissions";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { del } from "@vercel/blob";
 
 function normalizeImageUrl(value: FormDataEntryValue | null) {
   const imageUrl = String(value ?? "").trim().slice(0, 500);
@@ -45,6 +46,22 @@ async function assertCategoryOwnership(categoryId: string, restaurantId: string)
     .limit(1);
 
   return Boolean(category);
+}
+
+function isBlobUrl(url: string | null) {
+  return Boolean(url && url.includes(".blob.vercel-storage.com/"));
+}
+
+async function deleteBlobBestEffort(url: string | null) {
+  if (!isBlobUrl(url)) return;
+  try {
+    await del(url!);
+  } catch (error) {
+    console.warn("calori.media.cleanup_failed", {
+      url,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+  }
 }
 
 async function assertProductOwnership(productId: string, restaurantId: string) {
@@ -144,11 +161,26 @@ export async function deleteProduct(formData: FormData) {
   assertPermission(canManageCatalog(role));
   const productId = String(formData.get("productId") ?? "");
 
-  if (!productId || !(await assertProductOwnership(productId, restaurant.id))) return;
+  if (!productId) return;
+
+  const [product] = await db
+    .select({ id: products.id, imageUrl: products.imageUrl })
+    .from(products)
+    .where(
+      and(
+        eq(products.id, productId),
+        eq(products.restaurantId, restaurant.id),
+      ),
+    )
+    .limit(1);
+
+  if (!product) return;
 
   await db.delete(products).where(
     and(eq(products.id, productId), eq(products.restaurantId, restaurant.id)),
   );
+
+  await deleteBlobBestEffort(product.imageUrl);
 
   revalidatePath("/dashboard/cardapio");
 }
