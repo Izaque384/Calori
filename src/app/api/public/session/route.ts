@@ -4,6 +4,7 @@ import { restaurants, tableSessions, tables } from "@/db/schema";
 import { hashTableSessionToken } from "@/lib/table-session";
 import { getOrCreateOpenTableVisit } from "@/lib/table-visit";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { getSubscriptionSummary } from "@/lib/subscription";
 import { and, eq } from "drizzle-orm";
 
 type Payload = {
@@ -36,13 +37,29 @@ export async function POST(request: Request) {
   if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
   const [restaurant] = await db
-    .select({ id: restaurants.id })
+    .select({
+      id: restaurants.id,
+      subscriptionStatus: restaurants.subscriptionStatus,
+      trialEndsAt: restaurants.trialEndsAt,
+    })
     .from(restaurants)
     .where(and(eq(restaurants.slug, restaurantSlug), eq(restaurants.active, true)))
     .limit(1);
 
   if (!restaurant) {
     return Response.json({ error: "Restaurante indisponível." }, { status: 404 });
+  }
+
+  const subscription = getSubscriptionSummary({
+    status: restaurant.subscriptionStatus,
+    trialEndsAt: restaurant.trialEndsAt,
+  });
+
+  if (!subscription.hasAccess) {
+    return Response.json(
+      { error: "O cardápio está temporariamente indisponível." },
+      { status: 402 },
+    );
   }
 
   const [table] = await db
