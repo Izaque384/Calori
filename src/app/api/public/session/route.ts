@@ -2,6 +2,8 @@ import { randomBytes } from "crypto";
 import { db } from "@/db";
 import { restaurants, tableSessions, tables } from "@/db/schema";
 import { hashTableSessionToken } from "@/lib/table-session";
+import { getOrCreateOpenTableVisit } from "@/lib/table-visit";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { and, eq } from "drizzle-orm";
 
 type Payload = {
@@ -24,6 +26,14 @@ export async function POST(request: Request) {
   if (!restaurantSlug || !tableCode) {
     return Response.json({ error: "Mesa inválida." }, { status: 400 });
   }
+
+  const limit = await checkRateLimit({
+    scope: "table-session",
+    identity: `${restaurantSlug}:${tableCode}`,
+    limit: 24,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
   const [restaurant] = await db
     .select({ id: restaurants.id })
@@ -51,12 +61,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "Mesa indisponível." }, { status: 404 });
   }
 
+  const visit = await getOrCreateOpenTableVisit({
+    restaurantId: restaurant.id,
+    tableId: table.id,
+  });
+
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
   await db.insert(tableSessions).values({
     restaurantId: restaurant.id,
     tableId: table.id,
+    visitId: visit.id,
     tokenHash: hashTableSessionToken(token),
     expiresAt,
   });
