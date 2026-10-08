@@ -30,7 +30,13 @@ export async function GET() {
 
     databaseOk = true;
     databaseLatencyMs = Date.now() - dbStartedAt;
-    billingConfigured = new Set(secrets.map((item) => item.key)).size === 2;
+    const databaseSecretsConfigured =
+      new Set(secrets.map((item) => item.key)).size === 2;
+    billingConfigured = Boolean(
+      (process.env.STRIPE_WEBHOOK_SECRET &&
+        process.env.STRIPE_CHECKOUT_REFERENCE_SECRET) ||
+        databaseSecretsConfigured,
+    );
   } catch (error) {
     console.error("calori.health.database_failed", {
       error: error instanceof Error ? error.message : "unknown",
