@@ -2,7 +2,7 @@ import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
 import { orders, tableVisits, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, ne } from "drizzle-orm";
 import Link from "next/link";
 import { closeTableVisit, createTable, toggleTable } from "./actions";
 import TablesMonitor from "./tables-monitor";
@@ -31,12 +31,14 @@ export default async function TablesPage() {
       id: tableVisits.id,
       tableId: tableVisits.tableId,
       openedAt: tableVisits.openedAt,
+      expiresAt: tableVisits.expiresAt,
     })
     .from(tableVisits)
     .where(
       and(
         eq(tableVisits.restaurantId, restaurant.id),
         isNull(tableVisits.closedAt),
+        gt(tableVisits.expiresAt, new Date()),
       ),
     )
     .orderBy(asc(tableVisits.openedAt));
