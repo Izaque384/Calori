@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS table_visits (
   restaurant_id uuid NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   table_id uuid NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
   opened_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL DEFAULT (now() + interval '12 hours'),
   closed_at timestamptz
 );
 
@@ -14,6 +15,20 @@ CREATE INDEX IF NOT EXISTS table_visits_restaurant_idx
 
 CREATE INDEX IF NOT EXISTS table_visits_table_idx
   ON table_visits (table_id);
+
+ALTER TABLE table_visits
+  ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+
+UPDATE table_visits
+SET expires_at = opened_at + interval '12 hours'
+WHERE expires_at IS NULL;
+
+ALTER TABLE table_visits
+  ALTER COLUMN expires_at SET NOT NULL,
+  ALTER COLUMN expires_at SET DEFAULT (now() + interval '12 hours');
+
+CREATE INDEX IF NOT EXISTS table_visits_expires_idx
+  ON table_visits (expires_at);
 
 CREATE UNIQUE INDEX IF NOT EXISTS table_visits_one_open_per_table_uq
   ON table_visits (restaurant_id, table_id)
