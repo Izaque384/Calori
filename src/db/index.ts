@@ -8,6 +8,6 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not configured");
 }
 
-const sql = neon(connectionString);
+export const sqlClient = neon(connectionString);
 
-export const db = drizzle(sql, { schema });
+export const db = drizzle(sqlClient, { schema });
