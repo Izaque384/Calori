@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { serviceRequests, tableSessions, tableVisits, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canManageTables } from "@/lib/permissions";
+import { closeExpiredTableVisits } from "@/lib/table-visit";
 import { and, eq, isNull } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
@@ -14,6 +15,9 @@ export async function createTable(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
 
   if (!name) return;
+  if (name.length > 80) {
+    throw new Error("O nome da mesa deve ter no máximo 80 caracteres.");
+  }
 
   let publicCode: string | null = null;
 
@@ -53,6 +57,8 @@ export async function toggleTable(formData: FormData) {
   if (!tableId) return;
 
   if (active) {
+    await closeExpiredTableVisits(restaurant.id);
+
     const [openVisit] = await db
       .select({ id: tableVisits.id })
       .from(tableVisits)
