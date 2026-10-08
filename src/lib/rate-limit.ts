@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { apiRateLimits } from "@/db/schema";
-import { and, eq, lt, sql } from "drizzle-orm";
+import { lt, sql } from "drizzle-orm";
 
 export async function checkRateLimit(params: {
   scope: string;
@@ -33,12 +33,7 @@ export async function checkRateLimit(params: {
   if ((row?.count ?? 0) === 1) {
     await db
       .delete(apiRateLimits)
-      .where(
-        and(
-          eq(apiRateLimits.bucketKey, bucketKey),
-          lt(apiRateLimits.expiresAt, new Date(now - 60 * 60 * 1000)),
-        ),
-      )
+      .where(lt(apiRateLimits.expiresAt, new Date()))
       .catch(() => undefined);
   }
 
