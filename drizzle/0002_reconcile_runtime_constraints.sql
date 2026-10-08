@@ -48,3 +48,7 @@ CREATE INDEX IF NOT EXISTS service_requests_restaurant_status_created_idx
 CREATE INDEX IF NOT EXISTS table_visits_open_restaurant_expires_idx
   ON table_visits (restaurant_id, expires_at)
   WHERE closed_at IS NULL;
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS tables_restaurant_normalized_name_uq
+  ON tables (restaurant_id, lower(btrim(name)));
