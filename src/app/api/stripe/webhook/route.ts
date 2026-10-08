@@ -201,10 +201,22 @@ export async function POST(request: Request) {
           );
       }
     }
+    const processedAt = new Date();
+
     await db
       .update(stripeWebhookEvents)
-      .set({ processedAt: new Date() })
+      .set({ processedAt })
       .where(eq(stripeWebhookEvents.eventId, eventId));
+
+    await db
+      .delete(stripeWebhookEvents)
+      .where(
+        lt(
+          stripeWebhookEvents.processedAt,
+          new Date(processedAt.getTime() - 90 * 24 * 60 * 60 * 1000),
+        ),
+      )
+      .catch(() => undefined);
 
     if (Math.random() < 0.02) {
       const retentionCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
