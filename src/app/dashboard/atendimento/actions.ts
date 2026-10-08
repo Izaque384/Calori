@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { serviceRequests, tableSessions } from "@/db/schema";
+import { serviceRequests, tableSessions, tableVisits } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
 import { assertPermission, canOperate } from "@/lib/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function handleServiceRequest(formData: FormData) {
@@ -19,6 +19,7 @@ export async function handleServiceRequest(formData: FormData) {
       id: serviceRequests.id,
       type: serviceRequests.type,
       sessionId: serviceRequests.sessionId,
+      visitId: serviceRequests.visitId,
       tableId: serviceRequests.tableId,
     })
     .from(serviceRequests)
@@ -35,28 +36,58 @@ export async function handleServiceRequest(formData: FormData) {
 
   const handledAt = new Date();
 
-  await db
-    .update(serviceRequests)
-    .set({
-      status: "handled",
-      handledAt,
-    })
-    .where(
-      and(
-        eq(serviceRequests.id, request.id),
-        eq(serviceRequests.restaurantId, restaurant.id),
-        eq(serviceRequests.status, "pending"),
-      ),
-    );
-
-  if (request.type === "request_bill") {
+  if (request.type === "request_bill" && request.visitId) {
+    await db.batch([
+      db
+        .update(serviceRequests)
+        .set({ status: "handled", handledAt })
+        .where(
+          and(
+            eq(serviceRequests.id, request.id),
+            eq(serviceRequests.restaurantId, restaurant.id),
+            eq(serviceRequests.status, "pending"),
+          ),
+        ),
+      db
+        .update(tableVisits)
+        .set({ closedAt: handledAt })
+        .where(
+          and(
+            eq(tableVisits.id, request.visitId),
+            eq(tableVisits.restaurantId, restaurant.id),
+            isNull(tableVisits.closedAt),
+          ),
+        ),
+      db
+        .update(tableSessions)
+        .set({ expiresAt: handledAt })
+        .where(
+          and(
+            eq(tableSessions.restaurantId, restaurant.id),
+            eq(tableSessions.visitId, request.visitId),
+          ),
+        ),
+      db
+        .update(serviceRequests)
+        .set({ status: "cancelled", handledAt })
+        .where(
+          and(
+            eq(serviceRequests.restaurantId, restaurant.id),
+            eq(serviceRequests.visitId, request.visitId),
+            eq(serviceRequests.status, "pending"),
+            ne(serviceRequests.id, request.id),
+          ),
+        ),
+    ]);
+  } else {
     await db
-      .update(tableSessions)
-      .set({ expiresAt: handledAt })
+      .update(serviceRequests)
+      .set({ status: "handled", handledAt })
       .where(
         and(
-          eq(tableSessions.tableId, request.tableId),
-          eq(tableSessions.restaurantId, restaurant.id),
+          eq(serviceRequests.id, request.id),
+          eq(serviceRequests.restaurantId, restaurant.id),
+          eq(serviceRequests.status, "pending"),
         ),
       );
   }
