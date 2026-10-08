@@ -196,7 +196,11 @@ export const categories = pgTable(
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("categories_restaurant_idx").on(table.restaurantId)],
+  (table) => [
+    index("categories_restaurant_idx").on(table.restaurantId),
+    uniqueIndex("categories_restaurant_normalized_name_uq")
+      .on(table.restaurantId, sql`lower(trim(${table.name}))`),
+  ],
 );
 
 export const products = pgTable(
