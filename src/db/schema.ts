@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -128,11 +129,15 @@ export const tableVisits = pgTable(
       .notNull()
       .references(() => tables.id, { onDelete: "cascade" }),
     openedAt: timestamp("opened_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true })
+      .notNull()
+      .default(sql`now() + interval '12 hours'`),
     closedAt: timestamp("closed_at", { withTimezone: true }),
   },
   (table) => [
     index("table_visits_restaurant_idx").on(table.restaurantId),
     index("table_visits_table_idx").on(table.tableId),
+    index("table_visits_expires_idx").on(table.expiresAt),
   ],
 );
 
