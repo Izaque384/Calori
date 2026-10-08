@@ -24,7 +24,12 @@ export async function POST(request: Request) {
   const restaurantSlug = String(payload.restaurantSlug ?? "").trim();
   const tableCode = String(payload.tableCode ?? "").trim();
 
-  if (!restaurantSlug || !tableCode) {
+  if (
+    !restaurantSlug ||
+    restaurantSlug.length > 160 ||
+    !tableCode ||
+    tableCode.length > 64
+  ) {
     return Response.json({ error: "Mesa inválida." }, { status: 400 });
   }
 
