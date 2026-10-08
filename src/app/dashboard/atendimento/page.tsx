@@ -1,8 +1,8 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { orders, serviceRequests, tableSessions, tables } from "@/db/schema";
+import { orders, serviceRequests, tables } from "@/db/schema";
 import { requireCurrentRestaurant } from "@/lib/current-restaurant";
-import { and, desc, eq, gt, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { cancelServiceRequest, handleServiceRequest } from "./actions";
 import ServiceMonitor from "./service-monitor";
 
@@ -29,6 +29,7 @@ export default async function ServicePage() {
       createdAt: serviceRequests.createdAt,
       handledAt: serviceRequests.handledAt,
       sessionId: serviceRequests.sessionId,
+      visitId: serviceRequests.visitId,
       tableId: serviceRequests.tableId,
       tableName: tables.name,
     })
@@ -40,62 +41,38 @@ export default async function ServicePage() {
   const pending = rows.filter((row) => row.status === "pending");
   const history = rows.filter((row) => row.status !== "pending").slice(0, 20);
 
-  const pendingBillTableIds = [
+  const pendingBillVisitIds = [
     ...new Set(
       pending
-        .filter((row) => row.type === "request_bill")
-        .map((row) => row.tableId),
+        .filter((row) => row.type === "request_bill" && row.visitId)
+        .map((row) => row.visitId!)
     ),
   ];
 
-  const activeBillSessions = pendingBillTableIds.length
+  const billOrders = pendingBillVisitIds.length
     ? await db
         .select({
-          id: tableSessions.id,
-          tableId: tableSessions.tableId,
-        })
-        .from(tableSessions)
-        .where(
-          and(
-            eq(tableSessions.restaurantId, restaurant.id),
-            inArray(tableSessions.tableId, pendingBillTableIds),
-            gt(tableSessions.expiresAt, new Date()),
-          ),
-        )
-    : [];
-
-  const activeBillSessionIds = activeBillSessions.map((session) => session.id);
-
-  const billOrders = activeBillSessionIds.length
-    ? await db
-        .select({
-          sessionId: orders.sessionId,
+          visitId: orders.visitId,
           total: orders.total,
         })
         .from(orders)
         .where(
           and(
             eq(orders.restaurantId, restaurant.id),
-            inArray(orders.sessionId, activeBillSessionIds),
+            inArray(orders.visitId, pendingBillVisitIds),
             ne(orders.status, "cancelled"),
           ),
         )
     : [];
 
-  const tableBySession = new Map(
-    activeBillSessions.map((session) => [session.id, session.tableId]),
-  );
-  const totalsByTable = new Map<string, { total: number; count: number }>();
+  const totalsByVisit = new Map<string, { total: number; count: number }>();
 
   for (const order of billOrders) {
-    if (!order.sessionId) continue;
-    const tableId = tableBySession.get(order.sessionId);
-    if (!tableId) continue;
-
-    const current = totalsByTable.get(tableId) ?? { total: 0, count: 0 };
+    if (!order.visitId) continue;
+    const current = totalsByVisit.get(order.visitId) ?? { total: 0, count: 0 };
     current.total += Number(order.total);
     current.count += 1;
-    totalsByTable.set(tableId, current);
+    totalsByVisit.set(order.visitId, current);
   }
 
   return (
@@ -131,7 +108,7 @@ export default async function ServicePage() {
             pending.map((request) => {
               const billSummary =
                 request.type === "request_bill"
-                  ? totalsByTable.get(request.tableId)
+                  ? totalsByVisit.get(request.visitId ?? "")
                   : undefined;
 
               return (
