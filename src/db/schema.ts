@@ -55,7 +55,15 @@ export const restaurants = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("restaurants_slug_uq").on(table.slug)],
+  (table) => [
+    uniqueIndex("restaurants_slug_uq").on(table.slug),
+    uniqueIndex("restaurants_stripe_subscription_uq")
+      .on(table.stripeSubscriptionId)
+      .where(sql`${table.stripeSubscriptionId} is not null`),
+    uniqueIndex("restaurants_stripe_customer_uq")
+      .on(table.stripeCustomerId)
+      .where(sql`${table.stripeCustomerId} is not null`),
+  ],
 );
 
 // userId will reference the chosen auth provider's stable user id.
@@ -142,6 +150,9 @@ export const tableVisits = pgTable(
     index("table_visits_restaurant_idx").on(table.restaurantId),
     index("table_visits_table_idx").on(table.tableId),
     index("table_visits_expires_idx").on(table.expiresAt),
+    uniqueIndex("table_visits_one_open_per_table_uq")
+      .on(table.restaurantId, table.tableId)
+      .where(sql`${table.closedAt} is null`),
   ],
 );
 
@@ -273,6 +284,9 @@ export const orders = pgTable(
   },
   (table) => [
     uniqueIndex("orders_restaurant_number_uq").on(table.restaurantId, table.number),
+    uniqueIndex("orders_restaurant_request_key_uq")
+      .on(table.restaurantId, table.requestKey)
+      .where(sql`${table.requestKey} is not null`),
     index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
     index("orders_table_idx").on(table.tableId),
     index("orders_visit_idx").on(table.visitId),
