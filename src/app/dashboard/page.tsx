@@ -86,9 +86,9 @@ export default async function DashboardPage() {
   const lifetimeOrderCount = lifetimeOrderRows[0]?.count ?? 0;
 
   const activationSteps = [
-    { done: productCount > 0, title: "Cadastre o primeiro produto", description: "Comece pelo item que melhor representa a casa.", href: "/dashboard/cardapio" },
-    { done: tableCount > 0, title: "Crie a primeira mesa", description: "O QR Code será gerado automaticamente.", href: "/dashboard/mesas" },
-    { done: lifetimeOrderCount > 0, title: "Teste o QR Code e o primeiro pedido", description: "Abra a primeira mesa como cliente e valide o fluxo completo antes de colocar no salão.", href: firstTableId ? `/dashboard/mesas/${firstTableId}/qr` : "/dashboard/mesas" },
+    { done: productCount > 0, title: "Cadastre o primeiro produto", href: "/dashboard/cardapio" },
+    { done: tableCount > 0, title: "Crie a primeira mesa", href: "/dashboard/mesas" },
+    { done: lifetimeOrderCount > 0, title: "Teste o primeiro pedido", href: firstTableId ? `/dashboard/mesas/${firstTableId}/qr` : "/dashboard/mesas" },
   ];
   const activationComplete = activationSteps.every((step) => step.done);
 
@@ -120,53 +120,14 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <main className="dashboard-shell">
+    <main className="dashboard-shell dashboard-shell-cinematic">
       <DashboardSidebar restaurantName={restaurant.name} role={membership.role} activePath="/dashboard" />
-      <section className="dashboard-content dashboard-isometric-content">
-        <div className="dashboard-live-heading">
-          <div>
-            <p className="eyebrow">Salão agora</p>
-            <h1>Veja a operação acontecendo.</h1>
-            <p className="muted">Mesas, pedidos e chamados organizados em uma visão que acompanha o ritmo real do restaurante.</p>
-          </div>
-          <div className="dashboard-live-summary">
-            <span><strong>{activeTables}</strong> ocupadas</span>
-            <span><strong>{inProgress}</strong> pedidos ativos</span>
-            <span className={attentionCount ? "needs-attention" : ""}><strong>{attentionCount}</strong> precisam de atenção</span>
-          </div>
-        </div>
 
-        {membership.role === "owner" && restaurant.subscriptionStatus === "trialing" && (
-          <a href="/dashboard/assinatura" className="trial-banner">
-            <div>
-              <span className="section-kicker">Período gratuito</span>
-              <strong>{subscription.trialDaysRemaining > 0 ? `${subscription.trialDaysRemaining} ${subscription.trialDaysRemaining === 1 ? "dia restante" : "dias restantes"}` : "Trial encerrado"}</strong>
-            </div>
-            <span>Ver assinatura →</span>
-          </a>
-        )}
-
-        {membership.role !== "staff" && !activationComplete && (
-          <section className="activation-card">
-            <div className="activation-card-heading">
-              <div><span className="section-kicker">Primeiros passos</span><h2>Prepare o Calori para o primeiro atendimento.</h2></div>
-              <span>{activationSteps.filter((step) => step.done).length}/3 concluídos</span>
-            </div>
-            <div className="activation-steps">
-              {activationSteps.map((step, index) => (
-                <a className={step.done ? "done" : ""} href={step.href} key={step.title}>
-                  <span>{step.done ? "✓" : index + 1}</span>
-                  <div><strong>{step.title}</strong><small>{step.description}</small></div>
-                  <b>→</b>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
-
+      <section className="dashboard-content dashboard-isometric-content dashboard-cinematic-content">
         <RestaurantOperationsScene
           tables={floorData}
           staff={sceneStaff}
+          restaurantName={restaurant.name}
           restaurantSlug={restaurant.slug}
           canViewReports={membership.role !== "staff"}
           metrics={{
@@ -179,12 +140,33 @@ export default async function DashboardPage() {
           }}
         />
 
-        <div className="dashboard-quick-actions">
-          <a href="/dashboard/pedidos"><span>Operação</span><strong>Pedidos</strong><small>Do novo pedido à entrega →</small></a>
-          <a href="/dashboard/atendimento"><span>Prioridade</span><strong>Atendimento</strong><small>{pendingService} pendentes agora →</small></a>
-          {membership.role !== "staff" && <a href="/dashboard/cardapio"><span>Cardápio</span><strong>Cardápio</strong><small>Produtos, preços e personalizações →</small></a>}
-          <a href="/dashboard/mesas"><span>Salão</span><strong>Mesas</strong><small>Configuração e QR Codes →</small></a>
-        </div>
+        {membership.role === "owner" && restaurant.subscriptionStatus === "trialing" && (
+          <a href="/dashboard/assinatura" className="cinematic-trial-chip glass-panel">
+            <span>Período gratuito</span>
+            <strong>
+              {subscription.trialDaysRemaining > 0
+                ? `${subscription.trialDaysRemaining} ${subscription.trialDaysRemaining === 1 ? "dia restante" : "dias restantes"}`
+                : "Trial encerrado"}
+            </strong>
+          </a>
+        )}
+
+        {membership.role !== "staff" && !activationComplete && (
+          <aside className="cinematic-setup-card glass-panel">
+            <div>
+              <span>Configuração inicial</span>
+              <strong>{activationSteps.filter((step) => step.done).length}/3 concluídos</strong>
+            </div>
+            <nav aria-label="Etapas de configuração">
+              {activationSteps.map((step, index) => (
+                <a className={step.done ? "done" : ""} href={step.href} key={step.title}>
+                  <i>{step.done ? "✓" : index + 1}</i>
+                  <span>{step.title}</span>
+                </a>
+              ))}
+            </nav>
+          </aside>
+        )}
       </section>
     </main>
   );

@@ -19,32 +19,33 @@ type SceneMetrics = {
 type Props = {
   tables: FloorTableItem[];
   staff: SceneStaffItem[];
+  restaurantName: string;
   restaurantSlug: string;
   canViewReports: boolean;
   metrics: SceneMetrics;
 };
 
 const tablePositions = [
-  { left: 19, top: 28 },
-  { left: 42, top: 23 },
-  { left: 66, top: 27 },
-  { left: 82, top: 40 },
-  { left: 24, top: 49 },
-  { left: 49, top: 46 },
-  { left: 70, top: 52 },
-  { left: 18, top: 70 },
-  { left: 43, top: 70 },
-  { left: 67, top: 73 },
-  { left: 84, top: 68 },
-  { left: 52, top: 84 },
+  { left: 22, top: 28, scale: .96 },
+  { left: 42, top: 21, scale: .88 },
+  { left: 64, top: 28, scale: 1.02 },
+  { left: 79, top: 40, scale: .9 },
+  { left: 26, top: 48, scale: 1.06 },
+  { left: 50, top: 45, scale: .98 },
+  { left: 69, top: 54, scale: 1.04 },
+  { left: 19, top: 68, scale: .9 },
+  { left: 41, top: 69, scale: 1.02 },
+  { left: 62, top: 72, scale: .92 },
+  { left: 82, top: 67, scale: 1.02 },
+  { left: 50, top: 83, scale: .86 },
 ];
 
 const staffPositions = [
-  { left: 9, top: 42 },
-  { left: 91, top: 28 },
-  { left: 10, top: 80 },
-  { left: 90, top: 79 },
-  { left: 51, top: 11 },
+  { left: 13, top: 39, delay: "0s" },
+  { left: 88, top: 29, delay: "-1.3s" },
+  { left: 11, top: 80, delay: "-2.4s" },
+  { left: 87, top: 79, delay: "-3.2s" },
+  { left: 51, top: 10, delay: "-4.1s" },
 ];
 
 function formatMoney(value: number) {
@@ -58,15 +59,19 @@ function roleLabel(role: string) {
 }
 
 function tableState(table: FloorTableItem) {
-  if (!table.active) return { key: "paused", label: "Pausada" };
-  if (table.billRequest) return { key: "critical", label: "Conta" };
-  if (table.waiterRequest) return { key: "attention", label: "Atendimento" };
-  if (table.orderStatus === "ready") return { key: "ready", label: "Pronto" };
+  if (!table.active) return { key: "paused", label: "Pausada", short: "Pausa" };
+  if (table.billRequest) return { key: "critical", label: "Conta solicitada", short: "Conta" };
+  if (table.waiterRequest) return { key: "attention", label: "Chamando atendimento", short: "Chamado" };
+  if (table.orderStatus === "ready") return { key: "ready", label: "Pedido pronto", short: "Pronto" };
   if (table.orderStatus === "preparing" || table.orderStatus === "new") {
-    return { key: "working", label: table.orderStatus === "new" ? "Recebido" : "Em preparo" };
+    return {
+      key: "working",
+      label: table.orderStatus === "new" ? "Pedido recebido" : "Em preparo",
+      short: table.orderStatus === "new" ? "Novo" : "Preparo",
+    };
   }
-  if (table.occupied) return { key: "occupied", label: "Ocupada" };
-  return { key: "free", label: "Livre" };
+  if (table.occupied) return { key: "occupied", label: "Mesa ocupada", short: "Ocupada" };
+  return { key: "free", label: "Mesa livre", short: "Livre" };
 }
 
 function durationLabel(startedAt: string | null) {
@@ -81,6 +86,7 @@ function durationLabel(startedAt: string | null) {
 export default function RestaurantOperationsScene({
   tables,
   staff,
+  restaurantName,
   restaurantSlug,
   canViewReports,
   metrics,
@@ -89,76 +95,120 @@ export default function RestaurantOperationsScene({
   const hiddenTableCount = Math.max(0, tables.length - visibleTables.length);
   const visibleStaff = staff.slice(0, staffPositions.length);
   const occupiedRate = tables.length ? Math.round((metrics.activeTables / tables.length) * 100) : 0;
-  const priorities = tables
-    .filter((table) => table.billRequest || table.waiterRequest || table.orderStatus === "ready")
-    .slice(0, 5);
+  const priorities = tables.filter(
+    (table) => table.billRequest || table.waiterRequest || table.orderStatus === "ready",
+  );
+
+  const metricCards = [
+    { label: "Mesas ocupadas", value: String(metrics.activeTables), detail: `${occupiedRate}% do salão`, tone: "blue" },
+    { label: "Pedidos ativos", value: String(metrics.activeOrders), detail: `${metrics.todayOrders} pedidos hoje`, tone: "violet" },
+    { label: "Chamados", value: String(metrics.pendingService), detail: "aguardando atendimento", tone: "amber" },
+    { label: "Atenção", value: String(metrics.attentionCount), detail: metrics.attentionCount ? "prioridades abertas" : "operação tranquila", tone: "red" },
+    { label: "Receita hoje", value: formatMoney(metrics.todayTotal), detail: "pedidos não cancelados", tone: "green" },
+  ];
 
   return (
-    <section className="ops-studio">
-      <div className="ops-scene-card">
-        <div className="ops-scene-topbar">
+    <section className="live-control-room" aria-label="Painel operacional do restaurante">
+      <div className="control-room-aurora control-room-aurora-a" />
+      <div className="control-room-aurora control-room-aurora-b" />
+      <div className="control-room-noise" />
+      <div className="control-room-grid" />
+
+      <header className="control-room-header">
+        <div className="control-room-title">
+          <span className="live-status-dot" />
           <div>
-            <span className="section-kicker">Cena operacional</span>
-            <h2>Salão em perspectiva</h2>
-            <p>Uma leitura visual do restaurante com mesas, equipe cadastrada e sinais de atenção.</p>
-          </div>
-          <div className="ops-scene-legend" aria-label="Legenda do salão">
-            <span><i className="free" /> Livre</span>
-            <span><i className="occupied" /> Ocupada</span>
-            <span><i className="attention" /> Atenção</span>
-            <span><i className="critical" /> Conta</span>
+            <span>Operação ao vivo</span>
+            <strong>{restaurantName}</strong>
           </div>
         </div>
 
-        <div className="ops-scene-scroll">
-          <div className="ops-scene-board">
-            <div className="ops-scene-zone ops-scene-zone-kitchen">
-              <span>Cozinha</span>
-              <i />
-              <i />
-              <i />
-            </div>
-            <div className="ops-scene-zone ops-scene-zone-counter">
-              <span>Expedição</span>
-              <i />
-              <i />
-            </div>
+        <div className="control-room-legend" aria-label="Legenda">
+          <span><i className="free" /> Livre</span>
+          <span><i className="occupied" /> Ocupada</span>
+          <span><i className="working" /> Pedido</span>
+          <span><i className="attention" /> Atenção</span>
+        </div>
+      </header>
 
-            <div className="ops-scene-hud">
-              <span><small>ocupadas</small><strong>{metrics.activeTables}</strong></span>
-              <span><small>pedidos ativos</small><strong>{metrics.activeOrders}</strong></span>
-              <span className={metrics.attentionCount ? "alert" : ""}><small>atenção</small><strong>{metrics.attentionCount}</strong></span>
-              <span><small>hoje</small><strong>{formatMoney(metrics.todayTotal)}</strong></span>
+      <div className="control-room-metrics" aria-label="Indicadores principais">
+        {metricCards.map((metric) => (
+          <article className={`glass-metric glass-metric-${metric.tone}`} key={metric.label}>
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+            <small>{metric.detail}</small>
+          </article>
+        ))}
+      </div>
+
+      <div className="flow-system" aria-hidden="true">
+        <div className="flow-track flow-track-a"><i /><i /><i /></div>
+        <div className="flow-track flow-track-b"><i /><i /><i /></div>
+        <div className="flow-track flow-track-c"><i /><i /></div>
+      </div>
+
+      <div className="clay-scene-shell">
+        <div className="clay-scene">
+          <div className="scene-room-platform">
+            <div className="scene-room-edge scene-room-edge-left" />
+            <div className="scene-room-edge scene-room-edge-right" />
+            <div className="scene-kitchen-block">
+              <span>Cozinha</span>
+              <div className="kitchen-counter">
+                <i /><i /><i />
+              </div>
+            </div>
+            <div className="scene-pass-block">
+              <span>Expedição</span>
+              <i /><i />
             </div>
 
             {visibleTables.map((table, index) => {
               const state = tableState(table);
               const position = tablePositions[index];
               const duration = durationLabel(table.startedAt);
+              const bubbleCount = table.pendingCount || (table.orderStatus === "ready" ? 1 : 0);
+
               return (
                 <article
-                  className={`scene-table scene-table-${state.key}`}
+                  className={`clay-table clay-table-${state.key}`}
                   key={table.id}
-                  style={{ left: `${position.left}%`, top: `${position.top}%` }}
+                  style={{
+                    left: `${position.left}%`,
+                    top: `${position.top}%`,
+                    transform: `translate(-50%, -50%) scale(${position.scale})`,
+                  }}
                 >
-                  <div className="scene-table-model" aria-hidden="true">
-                    <span className="scene-chair chair-north" />
-                    <span className="scene-chair chair-east" />
-                    <span className="scene-chair chair-south" />
-                    <span className="scene-chair chair-west" />
-                    <span className="scene-table-shadow" />
-                    <span className="scene-table-base" />
-                    <span className="scene-table-top" />
+                  <div className="clay-table-notification">
+                    <span>{state.short}</span>
+                    {bubbleCount > 0 && <b>{bubbleCount}</b>}
+                  </div>
+
+                  <div className="clay-table-model" aria-hidden="true">
+                    <span className="clay-table-shadow" />
+                    <span className="clay-chair clay-chair-north" />
+                    <span className="clay-chair clay-chair-east" />
+                    <span className="clay-chair clay-chair-south" />
+                    <span className="clay-chair clay-chair-west" />
+                    <span className="clay-table-stem" />
+                    <span className="clay-table-top" />
+                    {table.occupied && (
+                      <>
+                        <span className="clay-diner clay-diner-a"><i /></span>
+                        <span className="clay-diner clay-diner-b"><i /></span>
+                      </>
+                    )}
                     {(table.billRequest || table.waiterRequest || table.orderStatus === "ready") && (
-                      <span className="scene-table-pulse" />
+                      <span className="clay-signal-ring" />
                     )}
                   </div>
-                  <div className="scene-table-label">
-                    <span>
-                      <strong>{table.name}</strong>
-                      <small>{duration ? duration : state.label}</small>
-                    </span>
-                    <b>{state.label}</b>
+
+                  <div className="clay-table-caption">
+                    <strong>{table.name}</strong>
+                    <span>{duration || state.label}</span>
+                    {table.occupied && (
+                      <small>{table.orderCount} {table.orderCount === 1 ? "pedido" : "pedidos"} · {formatMoney(table.total)}</small>
+                    )}
                   </div>
                 </article>
               );
@@ -168,121 +218,85 @@ export default function RestaurantOperationsScene({
               const position = staffPositions[index];
               return (
                 <div
-                  className={`scene-staff scene-staff-${member.role}`}
+                  className={`clay-person clay-person-${member.role}`}
                   key={member.id}
-                  style={{ left: `${position.left}%`, top: `${position.top}%` }}
-                  title="Posição visual da equipe cadastrada, não rastreamento em tempo real"
+                  style={{
+                    left: `${position.left}%`,
+                    top: `${position.top}%`,
+                    animationDelay: position.delay,
+                  }}
+                  title="Representação visual da equipe cadastrada; não é rastreamento de localização"
                 >
-                  <span className="scene-staff-shadow" />
-                  <span className="scene-staff-body" />
-                  <span className="scene-staff-head">{member.name.slice(0, 1).toUpperCase()}</span>
-                  <span className="scene-staff-tag">
+                  <span className="clay-person-bubble">
                     <strong>{member.name}</strong>
                     <small>{roleLabel(member.role)}</small>
+                  </span>
+                  <span className="clay-person-shadow" />
+                  <span className="clay-person-leg clay-person-leg-a" />
+                  <span className="clay-person-leg clay-person-leg-b" />
+                  <span className="clay-person-body" />
+                  <span className="clay-person-arm clay-person-arm-a" />
+                  <span className="clay-person-arm clay-person-arm-b" />
+                  <span className="clay-person-head">
+                    <i className="clay-person-hair" />
                   </span>
                 </div>
               );
             })}
 
             {tables.length === 0 && (
-              <div className="ops-scene-empty">
-                <strong>O salão começa aqui.</strong>
-                <span>Cadastre as mesas para construir a cena operacional.</span>
+              <div className="control-room-empty glass-panel">
+                <span>Salão vazio</span>
+                <strong>Construa sua cena operacional.</strong>
+                <p>Cadastre as primeiras mesas para transformar esta tela em um mapa vivo do restaurante.</p>
                 <Link href="/dashboard/mesas">Criar mesas →</Link>
               </div>
             )}
 
             {hiddenTableCount > 0 && (
-              <div className="ops-scene-overflow">+{hiddenTableCount} mesas fora da cena</div>
+              <div className="hidden-tables-chip">+{hiddenTableCount} mesas além da cena</div>
             )}
           </div>
-        </div>
-
-        <div className="ops-scene-footer">
-          <span>Equipe mostrada como mapa visual; o Calori não rastreia localização física.</span>
-          <Link href={tables[0] ? `/r/${restaurantSlug}/m/${tables[0].publicCode}` : "/dashboard/mesas"} target={tables[0] ? "_blank" : undefined}>
-            {tables[0] ? "Abrir uma mesa como cliente ↗" : "Configurar salão →"}
-          </Link>
         </div>
       </div>
 
-      <aside className="ops-companion-panel">
-        <section className="ops-panel-card ops-panel-card-emphasis">
-          <div className="ops-panel-heading">
-            <div>
-              <span className="section-kicker">Indicadores</span>
-              <h3>Ritmo da operação</h3>
-            </div>
-            <span className="ops-live-dot">ao vivo</span>
+      <aside className="priority-glass glass-panel">
+        <div className="priority-glass-heading">
+          <div>
+            <span>Prioridades</span>
+            <strong>{priorities.length ? "Ação necessária" : "Tudo sob controle"}</strong>
           </div>
+          <Link href="/dashboard/atendimento">Abrir fila →</Link>
+        </div>
 
-          <div className="ops-kpi-grid">
-            <div><strong>{metrics.todayOrders}</strong><span>pedidos hoje</span></div>
-            <div><strong>{metrics.activeOrders}</strong><span>em andamento</span></div>
-            <div><strong>{metrics.pendingService}</strong><span>chamados</span></div>
-            <div><strong>{formatMoney(metrics.todayTotal)}</strong><span>total do dia</span></div>
-          </div>
-
-          <div className="ops-occupancy">
-            <div><span>Ocupação do salão</span><strong>{occupiedRate}%</strong></div>
-            <div className="ops-progress"><i style={{ width: `${Math.min(100, occupiedRate)}%` }} /></div>
-            <small>{metrics.activeTables} de {tables.length} mesas ocupadas</small>
-          </div>
-        </section>
-
-        <section className="ops-panel-card">
-          <div className="ops-panel-heading">
-            <div>
-              <span className="section-kicker">Prioridades</span>
-              <h3>O que pede atenção</h3>
-            </div>
-            <Link href="/dashboard/atendimento">Fila →</Link>
-          </div>
-
-          <div className="ops-priority-list">
-            {priorities.length ? priorities.map((table) => {
-              const state = tableState(table);
-              return (
-                <div className={`ops-priority-row ${state.key}`} key={table.id}>
-                  <span className="ops-priority-icon" />
-                  <div><strong>{table.name}</strong><small>{state.label}</small></div>
-                  <b>{table.pendingCount || (table.orderStatus === "ready" ? 1 : 0)}</b>
-                </div>
-              );
-            }) : (
-              <div className="ops-calm-state">
-                <strong>Operação tranquila.</strong>
-                <span>Nenhum chamado, conta ou pedido pronto aguardando ação.</span>
+        <div className="priority-glass-list">
+          {priorities.length ? priorities.slice(0, 3).map((table) => {
+            const state = tableState(table);
+            return (
+              <div className={`priority-glass-row priority-${state.key}`} key={table.id}>
+                <i />
+                <span><strong>{table.name}</strong><small>{state.label}</small></span>
+                <b>{table.pendingCount || 1}</b>
               </div>
-            )}
-          </div>
-        </section>
-
-        <section className="ops-panel-card">
-          <div className="ops-panel-heading">
-            <div>
-              <span className="section-kicker">Equipe mapeada</span>
-              <h3>Acessos do restaurante</h3>
-            </div>
-          </div>
-
-          <div className="ops-staff-list">
-            {staff.slice(0, 5).map((member) => (
-              <div className="ops-staff-row" key={member.id}>
-                <span>{member.name.slice(0, 1).toUpperCase()}</span>
-                <div><strong>{member.name}</strong><small>{roleLabel(member.role)}</small></div>
-              </div>
-            ))}
-            {!staff.length && <small className="ops-empty-copy">Nenhum membro cadastrado.</small>}
-          </div>
-        </section>
-
-        <section className="ops-panel-links">
-          <Link href="/dashboard/pedidos">Pedidos <span>→</span></Link>
-          <Link href="/dashboard/mesas">Mesas <span>→</span></Link>
-          {canViewReports && <Link href="/dashboard/relatorios">Relatórios <span>→</span></Link>}
-        </section>
+            );
+          }) : (
+            <p>Nenhum chamado, conta ou pedido pronto aguardando ação.</p>
+          )}
+        </div>
       </aside>
+
+      <nav className="control-room-dock glass-panel" aria-label="Atalhos do painel">
+        <Link href="/dashboard/pedidos">Pedidos</Link>
+        <Link href="/dashboard/atendimento">Atendimento</Link>
+        <Link href="/dashboard/mesas">Mesas</Link>
+        {canViewReports && <Link href="/dashboard/relatorios">Relatórios</Link>}
+        <Link
+          href={tables[0] ? `/r/${restaurantSlug}/m/${tables[0].publicCode}` : "/dashboard/mesas"}
+          target={tables[0] ? "_blank" : undefined}
+        >
+          {tables[0] ? "Visão do cliente ↗" : "Configurar salão"}
+        </Link>
+      </nav>
     </section>
   );
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import CaloriBrand from "@/components/calori-brand";
 import { signOut } from "@/app/dashboard/actions";
 import type { RestaurantRole } from "@/lib/permissions";
@@ -17,8 +20,8 @@ type NavItem = {
 
 function NavIcon({ icon }: { icon: NavItem["icon"] }) {
   const common = {
-    width: 17,
-    height: 17,
+    width: 18,
+    height: 18,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
@@ -39,10 +42,10 @@ function NavIcon({ icon }: { icon: NavItem["icon"] }) {
   return <svg {...common}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>;
 }
 
-function NavLink({ item, activePath }: { item: NavItem; activePath: string }) {
+function NavLink({ item, activePath, onNavigate }: { item: NavItem; activePath: string; onNavigate: () => void }) {
   const active = activePath === item.href;
   return (
-    <Link className={active ? "active" : ""} href={item.href} aria-current={active ? "page" : undefined}>
+    <Link className={active ? "active" : ""} href={item.href} aria-current={active ? "page" : undefined} onClick={onNavigate}>
       <NavIcon icon={item.icon} />
       <span>{item.label}</span>
     </Link>
@@ -50,6 +53,26 @@ function NavLink({ item, activePath }: { item: NavItem; activePath: string }) {
 }
 
 export default function DashboardSidebar({ restaurantName, role, activePath }: Props) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [activePath]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   const operation: NavItem[] = [
     { href: "/dashboard", label: "Visão geral", icon: "home" },
     { href: "/dashboard/pedidos", label: "Pedidos", icon: "orders" },
@@ -73,46 +96,77 @@ export default function DashboardSidebar({ restaurantName, role, activePath }: P
   }
 
   return (
-    <aside className="dashboard-sidebar">
-      <div className="dashboard-sidebar-brand">
-        <CaloriBrand compact />
-        <span className="dashboard-product-label">Restaurante</span>
-      </div>
+    <>
+      <button
+        className={`dashboard-menu-trigger ${open ? "is-open" : ""}`}
+        type="button"
+        aria-label={open ? "Fechar menu" : "Abrir menu"}
+        aria-expanded={open}
+        aria-controls="calori-dashboard-navigation"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
 
-      <div className="restaurant-pill">
-        <span className="restaurant-pill-dot" />
-        <div>
-          <small>Você está em</small>
-          <strong>{restaurantName}</strong>
+      <button
+        className={`dashboard-sidebar-backdrop ${open ? "is-open" : ""}`}
+        type="button"
+        tabIndex={open ? 0 : -1}
+        aria-label="Fechar menu"
+        onClick={() => setOpen(false)}
+      />
+
+      <aside
+        id="calori-dashboard-navigation"
+        className={`dashboard-sidebar dashboard-sidebar-drawer ${open ? "is-open" : ""}`}
+        aria-hidden={!open}
+      >
+        <div className="dashboard-sidebar-brand">
+          <CaloriBrand compact />
+          <span className="dashboard-product-label">Restaurante</span>
         </div>
-      </div>
 
-      <nav className="dashboard-nav" aria-label="Navegação do painel">
-        <div className="dashboard-nav-section">
-          <span className="dashboard-nav-label">Operação</span>
-          {operation.map((item) => <NavLink key={item.href} item={item} activePath={activePath} />)}
-        </div>
-
-        {management.length > 0 && (
-          <div className="dashboard-nav-section">
-            <span className="dashboard-nav-label">Gestão</span>
-            {management.map((item) => <NavLink key={item.href} item={item} activePath={activePath} />)}
-          </div>
-        )}
-      </nav>
-
-      <div className="dashboard-sidebar-footer">
-        <div className="dashboard-brand-note">
-          <span />
+        <div className="restaurant-pill">
+          <span className="restaurant-pill-dot" />
           <div>
-            <strong>Calori</strong>
-            <small>Simples, elegante e próximo.</small>
+            <small>Você está em</small>
+            <strong>{restaurantName}</strong>
           </div>
         </div>
-        <form action={signOut}>
-          <button className="dashboard-signout" type="submit">Sair</button>
-        </form>
-      </div>
-    </aside>
+
+        <nav className="dashboard-nav" aria-label="Navegação do painel">
+          <div className="dashboard-nav-section">
+            <span className="dashboard-nav-label">Operação</span>
+            {operation.map((item) => (
+              <NavLink key={item.href} item={item} activePath={activePath} onNavigate={() => setOpen(false)} />
+            ))}
+          </div>
+
+          {management.length > 0 && (
+            <div className="dashboard-nav-section">
+              <span className="dashboard-nav-label">Gestão</span>
+              {management.map((item) => (
+                <NavLink key={item.href} item={item} activePath={activePath} onNavigate={() => setOpen(false)} />
+              ))}
+            </div>
+          )}
+        </nav>
+
+        <div className="dashboard-sidebar-footer">
+          <div className="dashboard-brand-note">
+            <span />
+            <div>
+              <strong>Calori</strong>
+              <small>Operação do restaurante em um só lugar.</small>
+            </div>
+          </div>
+          <form action={signOut}>
+            <button className="dashboard-signout" type="submit">Sair</button>
+          </form>
+        </div>
+      </aside>
+    </>
   );
 }
