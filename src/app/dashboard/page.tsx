@@ -53,7 +53,7 @@ export default async function DashboardPage() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const [todayRows, inProgressRows, activeTableRows, pendingServiceRows, productRows, tableRows, lifetimeOrderRows] = await Promise.all([
+  const [todayRows, inProgressRows, activeTableRows, pendingServiceRows, productRows, tableRows, firstTableRows, lifetimeOrderRows] = await Promise.all([
     db
       .select({
         count: sql<number>`count(*)::int`,
@@ -99,6 +99,11 @@ export default async function DashboardPage() {
       .from(tables)
       .where(eq(tables.restaurantId, restaurant.id)),
     db
+      .select({ id: tables.id })
+      .from(tables)
+      .where(eq(tables.restaurantId, restaurant.id))
+      .limit(1),
+    db
       .select({ count: sql<number>`count(*)::int` })
       .from(orders)
       .where(eq(orders.restaurantId, restaurant.id)),
@@ -110,6 +115,7 @@ export default async function DashboardPage() {
   const pendingService = pendingServiceRows[0]?.count ?? 0;
   const productCount = productRows[0]?.count ?? 0;
   const tableCount = tableRows[0]?.count ?? 0;
+  const firstTableId = firstTableRows[0]?.id;
   const lifetimeOrderCount = lifetimeOrderRows[0]?.count ?? 0;
   const activationSteps = [
     {
@@ -126,9 +132,9 @@ export default async function DashboardPage() {
     },
     {
       done: lifetimeOrderCount > 0,
-      title: "Faça um pedido teste",
-      description: "Valide a experiência do cliente antes de colocar no salão.",
-      href: "/dashboard/mesas",
+      title: "Teste o QR Code e o primeiro pedido",
+      description: "Abra a primeira mesa como cliente e valide o fluxo completo antes de colocar no salão.",
+      href: firstTableId ? `/dashboard/mesas/${firstTableId}/qr` : "/dashboard/mesas",
     },
   ];
   const activationComplete = activationSteps.every((step) => step.done);

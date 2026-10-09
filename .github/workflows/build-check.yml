@@ -5,17 +5,26 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://calori:calori@localhost:5432/calori
+      DATABASE_URL_UNPOOLED: postgresql://calori:calori@localhost:5432/calori
+      NEON_AUTH_BASE_URL: https://example.com/neondb/auth
+      NEON_AUTH_COOKIE_SECRET: ci-only-cookie-secret-with-at-least-32-characters
+      NEXT_PUBLIC_APP_URL: https://calorixx.vercel.app
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - name: Install dependencies
         run: npm install
@@ -23,3 +32,5 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test
+      - name: Production build
+        run: npm run build

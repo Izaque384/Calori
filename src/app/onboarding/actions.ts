@@ -68,8 +68,12 @@ export async function createRestaurant(_prevState: OnboardingState, formData: Fo
         displayName: session.user.name || null,
       }),
     ]);
-  } catch {
+  } catch (error) {
     creationFailed = true;
+    console.error("calori.onboarding.restaurant_create_failed", {
+      userId: session.user.id,
+      error: error instanceof Error ? error.message : "unknown",
+    });
   }
 
   if (creationFailed) {
