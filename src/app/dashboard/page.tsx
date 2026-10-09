@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import TableFloorMap, { type FloorTableItem } from "@/components/table-floor-map";
+import { type FloorTableItem } from "@/components/table-floor-map";
+import RestaurantOperationsScene, { type SceneStaffItem } from "@/components/restaurant-operations-scene";
 import { orders, products, restaurantMembers, restaurants, serviceRequests, tables, tableVisits } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
 import { and, asc, eq, gt, gte, inArray, isNull, ne, sql } from "drizzle-orm";
@@ -8,10 +9,6 @@ import { redirect } from "next/navigation";
 import { getSubscriptionSummary } from "@/lib/subscription";
 
 export const dynamic = "force-dynamic";
-
-function formatMoney(value: string | number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value));
-}
 
 function priorityStatus(statuses: string[]) {
   if (statuses.includes("ready")) return "ready" as const;
@@ -47,7 +44,7 @@ export default async function DashboardPage() {
   const [
     todayRows, inProgressRows, activeTableRows, pendingServiceRows,
     productRows, tableRows, firstTableRows, lifetimeOrderRows,
-    floorTableRows, floorVisits, floorOrders, floorRequests,
+    floorTableRows, floorVisits, floorOrders, floorRequests, floorStaff,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)::int`, total: sql<string>`coalesce(sum(${orders.total}), 0)::text` })
       .from(orders).where(and(eq(orders.restaurantId, restaurant.id), gte(orders.createdAt, startOfDay), ne(orders.status, "cancelled"))),
@@ -69,6 +66,14 @@ export default async function DashboardPage() {
       .where(and(eq(orders.restaurantId, restaurant.id), ne(orders.status, "cancelled"))),
     db.select({ tableId: serviceRequests.tableId, type: serviceRequests.type }).from(serviceRequests)
       .where(and(eq(serviceRequests.restaurantId, restaurant.id), eq(serviceRequests.status, "pending"))),
+    db.select({
+      userId: restaurantMembers.userId,
+      role: restaurantMembers.role,
+      displayName: restaurantMembers.displayName,
+      email: restaurantMembers.email,
+    }).from(restaurantMembers)
+      .where(eq(restaurantMembers.restaurantId, restaurant.id))
+      .orderBy(asc(restaurantMembers.createdAt)),
   ]);
 
   const today = todayRows[0] ?? { count: 0, total: "0" };
@@ -106,10 +111,18 @@ export default async function DashboardPage() {
 
   const attentionCount = floorData.filter((table) => table.waiterRequest || table.billRequest || table.orderStatus === "ready").length;
 
+  const sceneStaff: SceneStaffItem[] = floorStaff.map((member) => ({
+    id: member.userId,
+    name: member.displayName?.trim()
+      || member.email?.split("@")[0]
+      || (member.role === "owner" ? "Responsável" : "Equipe"),
+    role: member.role,
+  }));
+
   return (
     <main className="dashboard-shell">
       <DashboardSidebar restaurantName={restaurant.name} role={membership.role} activePath="/dashboard" />
-      <section className="dashboard-content">
+      <section className="dashboard-content dashboard-isometric-content">
         <div className="dashboard-live-heading">
           <div>
             <p className="eyebrow">Salão agora</p>
@@ -151,19 +164,20 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        <TableFloorMap tables={floorData} restaurantSlug={restaurant.slug} />
-
-        <div className="dashboard-section-heading">
-          <div><span className="section-kicker">Hoje</span><h2>Resumo da operação</h2></div>
-          {membership.role !== "staff" && <a href="/dashboard/relatorios">Ver relatórios →</a>}
-        </div>
-
-        <div className="metric-grid">
-          <article><span>Pedidos hoje</span><strong>{today.count}</strong></article>
-          <article><span>Em andamento</span><strong>{inProgress}</strong></article>
-          <article><span>Mesas ocupadas</span><strong>{activeTables}</strong></article>
-          <article><span>Total em pedidos</span><strong>{formatMoney(today.total)}</strong></article>
-        </div>
+        <RestaurantOperationsScene
+          tables={floorData}
+          staff={sceneStaff}
+          restaurantSlug={restaurant.slug}
+          canViewReports={membership.role !== "staff"}
+          metrics={{
+            activeTables,
+            activeOrders: inProgress,
+            pendingService,
+            attentionCount,
+            todayOrders: today.count,
+            todayTotal: Number(today.total),
+          }}
+        />
 
         <div className="dashboard-quick-actions">
           <a href="/dashboard/pedidos"><span>Operação</span><strong>Pedidos</strong><small>Do novo pedido à entrega →</small></a>
