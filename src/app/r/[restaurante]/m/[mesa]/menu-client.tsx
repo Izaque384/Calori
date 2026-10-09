@@ -78,9 +78,11 @@ export default function PublicMenuClient({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState<{ id: string; number: number; total: number; table: string } | null>(null);
+  const [trackingOpen, setTrackingOpen] = useState(true);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
+  const [serviceNote, setServiceNote] = useState("");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [billOpen, setBillOpen] = useState(false);
   const [billLoading, setBillLoading] = useState(false);
@@ -376,6 +378,7 @@ export default function PublicMenuClient({
           tableCode,
           sessionToken: token,
           type,
+          note: serviceNote.trim(),
         }),
       });
 
@@ -456,6 +459,7 @@ export default function PublicMenuClient({
       };
 
       setOrder(activeOrder);
+      setTrackingOpen(true);
       window.localStorage.setItem(activeOrderStorageKey, JSON.stringify(activeOrder));
       setCart([]);
       window.localStorage.removeItem(cartStorageKey);
@@ -468,25 +472,34 @@ export default function PublicMenuClient({
     }
   }
 
-  if (order) {
-    return (
-      <OrderStatusCard
-        orderId={order.id}
-        number={order.number}
-        total={order.total}
-        table={order.table}
-        restaurantSlug={restaurantSlug}
-        tableCode={tableCode}
-        onFinish={() => {
-          window.localStorage.removeItem(activeOrderStorageKey);
-          setOrder(null);
-        }}
-      />
-    );
-  }
-
   return (
     <>
+      <nav className="table-action-dock" aria-label="Ações da mesa">
+        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><span>01</span><strong>Cardápio</strong></button>
+        <button type="button" disabled={!order} onClick={() => order && setTrackingOpen(true)}><span>02</span><strong>Meu pedido</strong>{order && <i />}</button>
+        <button type="button" onClick={() => { setServiceOpen(true); setServiceMessage(""); }}><span>03</span><strong>Atendimento</strong></button>
+        <button type="button" disabled={billLoading} onClick={openBill}><span>04</span><strong>Minha conta</strong></button>
+      </nav>
+
+      {order && trackingOpen && (
+        <div className="public-active-order">
+          <OrderStatusCard
+            orderId={order.id}
+            number={order.number}
+            total={order.total}
+            table={order.table}
+            restaurantSlug={restaurantSlug}
+            tableCode={tableCode}
+            onBack={() => setTrackingOpen(false)}
+            onFinish={() => {
+              window.localStorage.removeItem(activeOrderStorageKey);
+              setOrder(null);
+              setTrackingOpen(false);
+            }}
+          />
+        </div>
+      )}
+
       <section className="public-menu-sections">
         <div className="public-menu-tools">
           <label className="public-search">
@@ -724,17 +737,24 @@ export default function PublicMenuClient({
         </div>
       )}
 
-      <button className="floating-service" type="button" onClick={() => { setServiceOpen(true); setServiceMessage(""); }}>
-        Atendimento
-      </button>
-
       {serviceOpen && (
         <div className="menu-modal-backdrop" onClick={() => setServiceOpen(false)}>
           <section className="menu-modal service-modal" onClick={(event) => event.stopPropagation()}>
             <button className="modal-close" type="button" onClick={() => setServiceOpen(false)}>×</button>
             <span className="section-kicker">Atendimento</span>
             <h2>Como podemos ajudar?</h2>
-            <p className="muted">Envie uma solicitação para a equipe do restaurante.</p>
+            <p className="muted">Diga o que você precisa e a equipe recebe junto com a identificação da mesa.</p>
+
+            <label className="service-note-field">
+              <span>Observação <small>opcional</small></span>
+              <textarea
+                value={serviceNote}
+                onChange={(event) => setServiceNote(event.target.value.slice(0, 160))}
+                maxLength={160}
+                placeholder="Ex.: mais guardanapos, água sem gelo..."
+              />
+              <small>{serviceNote.length}/160</small>
+            </label>
 
             <div className="service-choice-grid">
               <button type="button" disabled={serviceSending} onClick={() => sendServiceRequest("call_waiter")}>

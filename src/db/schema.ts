@@ -363,6 +363,7 @@ export const serviceRequests = pgTable(
     sessionId: uuid("session_id").references(() => tableSessions.id, { onDelete: "set null" }),
     visitId: uuid("visit_id").references(() => tableVisits.id, { onDelete: "set null" }),
     type: serviceRequestType("type").notNull(),
+    note: text("note"),
     status: serviceRequestStatus("status").notNull().default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     handledAt: timestamp("handled_at", { withTimezone: true }),

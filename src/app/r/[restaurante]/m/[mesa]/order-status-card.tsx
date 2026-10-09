@@ -12,6 +12,7 @@ type Props = {
   restaurantSlug: string;
   tableCode: string;
   onFinish: () => void;
+  onBack?: () => void;
 };
 
 function formatMoney(value: number) {
@@ -36,6 +37,7 @@ export default function OrderStatusCard({
   restaurantSlug,
   tableCode,
   onFinish,
+  onBack,
 }: Props) {
   const [status, setStatus] = useState<OrderStatus>("new");
 
@@ -113,10 +115,12 @@ export default function OrderStatusCard({
 
       <strong>{formatMoney(total)}</strong>
 
-      <button className="primary-button" type="button" onClick={onFinish}>
-        {status === "delivered" || status === "cancelled"
-          ? "Fazer novo pedido"
-          : "Voltar ao cardápio"}
+      <button
+        className="primary-button"
+        type="button"
+        onClick={status === "delivered" || status === "cancelled" ? onFinish : (onBack ?? onFinish)}
+      >
+        {status === "delivered" || status === "cancelled" ? "Fazer novo pedido" : "Continuar no cardápio"}
       </button>
     </section>
   );
