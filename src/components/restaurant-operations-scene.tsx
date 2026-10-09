@@ -264,7 +264,6 @@ export default function RestaurantOperationsScene({
               <span className="section-kicker">Equipe mapeada</span>
               <h3>Acessos do restaurante</h3>
             </div>
-            <Link href="/dashboard/equipe">Equipe →</Link>
           </div>
 
           <div className="ops-staff-list">
