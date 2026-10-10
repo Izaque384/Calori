@@ -20,6 +20,7 @@ export async function acceptTeamInvite(formData: FormData) {
       restaurantId: teamInvites.restaurantId,
       email: teamInvites.email,
       role: teamInvites.role,
+      workArea: teamInvites.workArea,
     })
     .from(teamInvites)
     .where(
@@ -55,6 +56,7 @@ export async function acceptTeamInvite(formData: FormData) {
         restaurantId: invite.restaurantId,
         userId: session.user.id,
         role: invite.role,
+        workArea: invite.workArea,
         email: invite.email,
         displayName: session.user.name || null,
       }),
