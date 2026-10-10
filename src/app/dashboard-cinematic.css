@@ -4334,3 +4334,277 @@
     animation:none !important;
   }
 }
+
+
+/* CALORI — UNIFIED DASHBOARD THEME
+   Matches the hidden lateral menu across the whole backoffice and removes
+   the tiled grid from the operational floor. */
+
+.dashboard-shell-cinematic,
+.dashboard-cinematic-content,
+.ops-home {
+  background:
+    radial-gradient(circle at 0 0, rgba(198,90,58,.13), transparent 26rem),
+    linear-gradient(180deg,#35251f 0%,#2d201b 46%,#251a16 100%) !important;
+}
+
+.ops-home::before {
+  background-image:none !important;
+  opacity:0 !important;
+}
+
+.ops-world-glow {
+  background:rgba(198,90,58,.075) !important;
+}
+
+.ops-floor {
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.025)),
+    linear-gradient(145deg,#efd8c0 0%,#e4c5a8 100%) !important;
+}
+
+/* Other dashboard pages now use the same warm-dark language as the drawer. */
+.dashboard-shell:not(.dashboard-shell-cinematic) {
+  min-height:100dvh !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(198,90,58,.13), transparent 28rem),
+    linear-gradient(180deg,#35251f 0%,#2d201b 48%,#251a16 100%) !important;
+  color:#f8f1ea !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) > .dashboard-content {
+  min-height:100dvh;
+  padding-top:34px;
+  background:transparent !important;
+  color:#f8f1ea !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row h1,
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row h3,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-title h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-row strong,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card strong,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-card h3 {
+  color:#fff8f1 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .eyebrow,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-kicker {
+  color:#d58d70 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .muted,
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-title p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-person span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-free-copy {
+  color:#bba79d !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .status-chip,
+.dashboard-shell:not(.dashboard-shell-cinematic) .tables-monitor,
+.dashboard-shell:not(.dashboard-shell-cinematic) .role-pill,
+.dashboard-shell:not(.dashboard-shell-cinematic) .role-you,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-code,
+.dashboard-shell:not(.dashboard-shell-cinematic) .availability-button {
+  border-color:rgba(255,255,255,.09) !important;
+  background:rgba(255,255,255,.055) !important;
+  color:#d8c8bf !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .monitor-live-dot,
+.dashboard-shell:not(.dashboard-shell-cinematic) .restaurant-pill-dot {
+  background:#d78663 !important;
+  box-shadow:0 0 0 4px rgba(215,134,99,.09) !important;
+}
+
+/* Surfaces */
+.dashboard-shell:not(.dashboard-shell-cinematic) .panel-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-column,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-row,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .large-empty-state,
+.dashboard-shell:not(.dashboard-shell-cinematic) .cancelled-orders,
+.dashboard-shell:not(.dashboard-shell-cinematic) .product-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .category-card {
+  border-color:rgba(255,255,255,.08) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.028)) !important;
+  color:#f3ebe5 !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.035),
+    0 18px 46px rgba(12,7,5,.16) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card-new,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-card.critical {
+  border-color:rgba(215,134,99,.28) !important;
+  background:
+    linear-gradient(145deg,rgba(198,90,58,.14),rgba(255,255,255,.025)) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-column-heading,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card-heading,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-card-head,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card-top,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card-meta,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-actions,
+.dashboard-shell:not(.dashboard-shell-cinematic) .cancelled-list > div,
+.dashboard-shell:not(.dashboard-shell-cinematic) .top-product-row {
+  border-color:rgba(255,255,255,.07) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-column-heading,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card-meta,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-item-options,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-item-note,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-operation-summary span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-card small,
+.dashboard-shell:not(.dashboard-shell-cinematic) .top-product-row span {
+  color:#aa958a !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-empty,
+.dashboard-shell:not(.dashboard-shell-cinematic) .large-empty-state {
+  color:#a9958b !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-number,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-total,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-operation-summary strong,
+.dashboard-shell:not(.dashboard-shell-cinematic) .top-product-row > strong {
+  color:#f4e8df !important;
+}
+
+/* Form controls */
+.dashboard-shell:not(.dashboard-shell-cinematic) input,
+.dashboard-shell:not(.dashboard-shell-cinematic) select,
+.dashboard-shell:not(.dashboard-shell-cinematic) textarea {
+  border-color:rgba(255,255,255,.095) !important;
+  background:rgba(255,255,255,.055) !important;
+  color:#f4ece7 !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.025);
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) input::placeholder,
+.dashboard-shell:not(.dashboard-shell-cinematic) textarea::placeholder {
+  color:#8e766b !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) input:focus,
+.dashboard-shell:not(.dashboard-shell-cinematic) select:focus,
+.dashboard-shell:not(.dashboard-shell-cinematic) textarea:focus {
+  outline:none !important;
+  border-color:rgba(215,134,99,.52) !important;
+  box-shadow:0 0 0 3px rgba(198,90,58,.10) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) label,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-fields label {
+  color:#d9c8bf !important;
+}
+
+/* Buttons and links */
+.dashboard-shell:not(.dashboard-shell-cinematic) .primary-button,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-main-action,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-action-link.primary-button {
+  border-color:#c75a3a !important;
+  background:linear-gradient(145deg,#cf6848,#ad4e36) !important;
+  color:#fff8f2 !important;
+  box-shadow:0 10px 24px rgba(121,48,30,.2) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .primary-button:hover,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-main-action:hover {
+  background:linear-gradient(145deg,#dc7654,#bb573d) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .secondary-button,
+.dashboard-shell:not(.dashboard-shell-cinematic) .secondary-link-button,
+.dashboard-shell:not(.dashboard-shell-cinematic) .text-link-button {
+  border-color:rgba(255,255,255,.09) !important;
+  background:rgba(255,255,255,.045) !important;
+  color:#e0cfc6 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .secondary-button:hover,
+.dashboard-shell:not(.dashboard-shell-cinematic) .secondary-link-button:hover,
+.dashboard-shell:not(.dashboard-shell-cinematic) .text-link-button:hover {
+  background:rgba(255,255,255,.08) !important;
+  color:#fff8f1 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .text-button {
+  color:#cdb7ac !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .text-button.danger {
+  color:#e39483 !important;
+}
+
+/* Operational accents */
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-operation-status.free,
+.dashboard-shell:not(.dashboard-shell-cinematic) .availability-button.on {
+  background:rgba(111,145,122,.13) !important;
+  color:#a8ccb1 !important;
+  border-color:rgba(111,145,122,.18) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-operation-status.occupied {
+  background:rgba(198,90,58,.15) !important;
+  color:#e6a28a !important;
+  border-color:rgba(198,90,58,.21) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .availability-button.off {
+  background:rgba(255,255,255,.035) !important;
+  color:#9c867c !important;
+  border-color:rgba(255,255,255,.07) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-dot.new { background:#d78663 !important; }
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-dot.preparing { background:#d4a15e !important; }
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-dot.ready { background:#7da184 !important; }
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-dot.delivered { background:#8d817b !important; }
+
+/* Reports and charts */
+.dashboard-shell:not(.dashboard-shell-cinematic) .report-bar,
+.dashboard-shell:not(.dashboard-shell-cinematic) .chart-bar,
+.dashboard-shell:not(.dashboard-shell-cinematic) [class*="bar-track"] {
+  background:rgba(255,255,255,.055) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .report-bar > span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .chart-bar > span,
+.dashboard-shell:not(.dashboard-shell-cinematic) [class*="bar-fill"] {
+  background:linear-gradient(180deg,#d47a5a,#ad4e36) !important;
+}
+
+/* Gentle separators */
+.dashboard-shell:not(.dashboard-shell-cinematic) hr,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-section,
+.dashboard-shell:not(.dashboard-shell-cinematic) .products-section {
+  border-color:rgba(255,255,255,.07) !important;
+}
+
+@media(max-width:760px) {
+  .dashboard-shell:not(.dashboard-shell-cinematic) > .dashboard-content {
+    padding-top:72px;
+  }
+}
