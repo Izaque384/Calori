@@ -20,6 +20,15 @@ export default function InviteForm() {
             <option value="manager">Manager · gestão operacional</option>
           </select>
         </label>
+        <label>
+          Setor no painel
+          <select name="workArea" defaultValue="">
+            <option value="">Não mostrar personagem</option>
+            <option value="waiter">Salão · garçom</option>
+            <option value="kitchen">Cozinha · cozinheiro</option>
+          </select>
+          <small>O personagem só aparece na cena principal quando um setor é definido.</small>
+        </label>
         <button className="primary-button" type="submit" disabled={pending}>
           {pending ? "Gerando convite..." : "Gerar convite"}
         </button>
