@@ -77,11 +77,16 @@ export const restaurantMembers = pgTable(
     role: memberRole("role").notNull().default("staff"),
     email: text("email"),
     displayName: text("display_name"),
+    workArea: text("work_area"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.restaurantId, table.userId] }),
     uniqueIndex("restaurant_members_one_restaurant_per_user_uq").on(table.userId),
+    check(
+      "restaurant_members_work_area_ck",
+      sql`${table.workArea} is null or ${table.workArea} in ('waiter', 'kitchen')`,
+    ),
   ],
 );
 
@@ -95,6 +100,7 @@ export const teamInvites = pgTable(
       .references(() => restaurants.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
     role: memberRole("role").notNull(),
+    workArea: text("work_area"),
     tokenHash: text("token_hash").notNull(),
     invitedByUserId: text("invited_by_user_id").notNull(),
     status: text("status").notNull().default("pending"),
@@ -109,6 +115,10 @@ export const teamInvites = pgTable(
       .where(sql`${table.status} = 'pending'`),
     index("team_invites_restaurant_idx").on(table.restaurantId),
     index("team_invites_email_idx").on(table.email),
+    check(
+      "team_invites_work_area_ck",
+      sql`${table.workArea} is null or ${table.workArea} in ('waiter', 'kitchen')`,
+    ),
   ],
 );
 

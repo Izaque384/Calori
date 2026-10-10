@@ -71,6 +71,7 @@ export default async function DashboardPage() {
       role: restaurantMembers.role,
       displayName: restaurantMembers.displayName,
       email: restaurantMembers.email,
+      workArea: restaurantMembers.workArea,
     }).from(restaurantMembers)
       .where(eq(restaurantMembers.restaurantId, restaurant.id))
       .orderBy(asc(restaurantMembers.createdAt)),
@@ -117,6 +118,9 @@ export default async function DashboardPage() {
       || member.email?.split("@")[0]
       || (member.role === "owner" ? "Responsável" : "Equipe"),
     role: member.role,
+    workArea: member.workArea === "waiter" || member.workArea === "kitchen"
+      ? member.workArea
+      : null,
   }));
 
   return (

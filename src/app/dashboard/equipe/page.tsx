@@ -15,6 +15,12 @@ function roleLabel(role: string) {
   return "Staff";
 }
 
+function workAreaLabel(workArea: string | null) {
+  if (workArea === "waiter") return "Salão · garçom";
+  if (workArea === "kitchen") return "Cozinha · cozinheiro";
+  return "Sem personagem no painel";
+}
+
 export default async function TeamPage() {
   const { session, restaurant, role } = await requireCurrentRestaurant();
   if (role !== "owner") redirect("/dashboard");
@@ -39,6 +45,7 @@ export default async function TeamPage() {
         role: restaurantMembers.role,
         email: restaurantMembers.email,
         displayName: restaurantMembers.displayName,
+        workArea: restaurantMembers.workArea,
         createdAt: restaurantMembers.createdAt,
       })
       .from(restaurantMembers)
@@ -49,6 +56,7 @@ export default async function TeamPage() {
         id: teamInvites.id,
         email: teamInvites.email,
         role: teamInvites.role,
+        workArea: teamInvites.workArea,
         status: teamInvites.status,
         expiresAt: teamInvites.expiresAt,
         createdAt: teamInvites.createdAt,
@@ -71,7 +79,7 @@ export default async function TeamPage() {
           <div>
             <p className="eyebrow">Equipe</p>
             <h1>Acessos do restaurante.</h1>
-            <p className="muted">Convide pessoas e escolha o nível de acesso de cada membro.</p>
+            <p className="muted">Convide pessoas, defina o acesso e indique o setor operacional. O Calori só mostra garçons e cozinheiros no salão quando esse setor estiver cadastrado.</p>
           </div>
           <div className="status-chip">{members.length} {members.length === 1 ? "membro" : "membros"}</div>
         </div>
@@ -108,6 +116,7 @@ export default async function TeamPage() {
                     <div>
                       <strong>{member.displayName || (isCurrentUser ? session.user.name : null) || "Membro da equipe"}</strong>
                       <span>{member.email || (isCurrentUser ? session.user.email : null) || "E-mail não disponível"}</span>
+                      <small className="team-work-area">{workAreaLabel(member.workArea)}</small>
                     </div>
                   </div>
 
@@ -118,9 +127,14 @@ export default async function TeamPage() {
                       <>
                         <form action={updateMemberRole} className="role-form">
                           <input type="hidden" name="userId" value={member.userId} />
-                          <select name="role" defaultValue={member.role}>
+                          <select name="role" defaultValue={member.role} aria-label="Nível de acesso">
                             <option value="manager">Manager</option>
                             <option value="staff">Staff</option>
+                          </select>
+                          <select name="workArea" defaultValue={member.workArea ?? ""} aria-label="Setor no painel">
+                            <option value="">Sem personagem</option>
+                            <option value="waiter">Salão · garçom</option>
+                            <option value="kitchen">Cozinha · cozinheiro</option>
                           </select>
                           <button className="secondary-button" type="submit">Salvar</button>
                         </form>
@@ -155,7 +169,7 @@ export default async function TeamPage() {
                     <div>
                       <strong>{invite.email}</strong>
                       <span>
-                        {roleLabel(invite.role)} · expira em{" "}
+                        {roleLabel(invite.role)} · {workAreaLabel(invite.workArea)} · expira em{" "}
                         {invite.expiresAt.toLocaleDateString("pt-BR")}
                       </span>
                     </div>
