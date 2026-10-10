@@ -28,6 +28,10 @@ export async function createTeamInvite(
   assertPermission(canManageSettings(role));
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const invitedRole = String(formData.get("role") ?? "") as "manager" | "staff";
+  const workAreaValue = String(formData.get("workArea") ?? "").trim();
+  const workArea = workAreaValue === "waiter" || workAreaValue === "kitchen"
+    ? workAreaValue
+    : null;
 
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     return { error: "Informe um e-mail válido." };
@@ -98,6 +102,7 @@ export async function createTeamInvite(
       restaurantId: restaurant.id,
       email,
       role: invitedRole,
+      workArea,
       tokenHash: hashInviteToken(token),
       invitedByUserId: session.user.id,
       expiresAt,
@@ -145,6 +150,10 @@ export async function updateMemberRole(formData: FormData) {
   assertPermission(canManageSettings(role));
   const userId = String(formData.get("userId") ?? "");
   const nextRole = String(formData.get("role") ?? "") as "manager" | "staff";
+  const workAreaValue = String(formData.get("workArea") ?? "").trim();
+  const workArea = workAreaValue === "waiter" || workAreaValue === "kitchen"
+    ? workAreaValue
+    : null;
 
   if (!userId || !["manager", "staff"].includes(nextRole)) return;
 
@@ -163,7 +172,7 @@ export async function updateMemberRole(formData: FormData) {
 
   await db
     .update(restaurantMembers)
-    .set({ role: nextRole })
+    .set({ role: nextRole, workArea })
     .where(
       and(
         eq(restaurantMembers.restaurantId, restaurant.id),
@@ -172,6 +181,7 @@ export async function updateMemberRole(formData: FormData) {
     );
 
   revalidatePath("/dashboard/equipe");
+  revalidatePath("/dashboard");
 }
 
 export async function removeTeamMember(formData: FormData) {
