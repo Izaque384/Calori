@@ -9,6 +9,7 @@ export type SceneStaffItem = {
   id: string;
   name: string;
   role: string;
+  workArea: "waiter" | "kitchen" | null;
 };
 
 type SceneMetrics = {
@@ -111,8 +112,8 @@ export default function RestaurantOperationsScene({
   const hiddenTableCount = Math.max(0, tables.length - visibleTables.length);
   const alertTables = useMemo(() => visibleTables.filter(isAlert), [visibleTables]);
   const alertSignature = alertTables.map((table) => table.id).join("|");
-  const activeWaiters = Math.min(3, Math.max(1, staff.length || 1));
-  const kitchenCrew = Math.min(3, Math.max(2, Math.ceil(Math.max(1, staff.length) / 2)));
+  const waiterStaff = staff.filter((member) => member.workArea === "waiter").slice(0, 3);
+  const kitchenStaff = staff.filter((member) => member.workArea === "kitchen").slice(0, 3);
 
   useEffect(() => {
     if (!alertSignature) return;
@@ -314,8 +315,13 @@ export default function RestaurantOperationsScene({
             );
           })}
 
-          {Array.from({ length: activeWaiters }).map((_, index) => (
-            <div className={"ops-person ops-waiter " + STAFF_ROUTES[index]} key={"waiter-" + index} aria-hidden="true">
+          {waiterStaff.map((member, index) => (
+            <div
+              className={"ops-person ops-waiter " + STAFF_ROUTES[index]}
+              key={member.id}
+              title={member.name + " · salão"}
+              aria-label={member.name + ", garçom do salão"}
+            >
               <span className="ops-person-shadow" />
               <span className="ops-person-head"><i /></span>
               <span className="ops-person-body" />
@@ -335,8 +341,13 @@ export default function RestaurantOperationsScene({
             </div>
 
             <div className="ops-kitchen-people" aria-hidden="true">
-              {Array.from({ length: kitchenCrew }).map((_, index) => (
-                <div className="ops-person ops-cook" key={index}>
+              {kitchenStaff.map((member) => (
+                <div
+                  className="ops-person ops-cook"
+                  key={member.id}
+                  title={member.name + " · cozinha"}
+                  aria-label={member.name + ", funcionário da cozinha"}
+                >
                   <span className="ops-person-shadow" />
                   <span className="ops-person-head"><i /></span>
                   <span className="ops-person-body" />
