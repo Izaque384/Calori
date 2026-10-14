@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 function statusLabel(status: string, trialActive: boolean) {
+  if (status === "legacy") return "Acesso legado";
   if (trialActive) return "Período gratuito";
   if (status === "active") return "Assinatura ativa";
   if (status === "past_due") return "Pagamento pendente";
@@ -84,7 +85,14 @@ export default async function SubscriptionPage() {
         </section>
 
         <section className="subscription-status-card">
-          {summary.isTrialActive ? (
+          {summary.isLegacy ? (
+            <>
+              <span className="section-kicker">Acesso legado</span>
+              <h2>Calori liberado para testes.</h2>
+              <p>Este restaurante tem acesso permanente aos recursos do Calori sem cobrança de assinatura.</p>
+              <p className="muted">Nenhuma contratação ou pagamento é necessário enquanto o acesso legado estiver ativo.</p>
+            </>
+          ) : summary.isTrialActive ? (
             <>
               <span className="section-kicker">14 dias grátis</span>
               <h2>{summary.trialDaysRemaining} {summary.trialDaysRemaining === 1 ? "dia restante" : "dias restantes"}</h2>
