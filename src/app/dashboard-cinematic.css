@@ -4883,3 +4883,301 @@
     font-size:13px !important;
   }
 }
+
+
+/* CALORI — TEXT LEGIBILITY PASS */
+.dashboard-sidebar-drawer .calori-brand-copy strong {
+  color:#fffaf6 !important;
+  font-size:21px !important;
+  font-weight:780 !important;
+  letter-spacing:-.025em;
+  line-height:1 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-product-label {
+  color:#e2b9a8 !important;
+  font-size:11px !important;
+  font-weight:850 !important;
+  letter-spacing:.14em !important;
+  line-height:1.2 !important;
+}
+
+.dashboard-sidebar-drawer .restaurant-pill {
+  padding:16px !important;
+  background:rgba(255,255,255,.065) !important;
+  border-color:rgba(255,255,255,.105) !important;
+}
+
+.dashboard-sidebar-drawer .restaurant-pill small {
+  color:#c8ada1 !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+  letter-spacing:.08em;
+  line-height:1.25 !important;
+  text-transform:uppercase;
+}
+
+.dashboard-sidebar-drawer .restaurant-pill strong {
+  color:#fffaf6 !important;
+  font-size:15px !important;
+  font-weight:780 !important;
+  line-height:1.35 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav-label {
+  color:#d5ad9a !important;
+  font-size:11px !important;
+  font-weight:850 !important;
+  letter-spacing:.13em !important;
+  line-height:1.2 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a {
+  color:#d9cbc4 !important;
+  font-size:15px !important;
+  font-weight:650 !important;
+  line-height:1.25 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a svg {
+  opacity:.92;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a:hover {
+  color:#fffaf6 !important;
+  background:rgba(255,255,255,.075) !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav .active {
+  color:#fff !important;
+  background:linear-gradient(135deg,rgba(198,90,58,.26),rgba(198,90,58,.12)) !important;
+  border-color:rgba(222,135,101,.25) !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav .active svg {
+  color:#df7758 !important;
+  opacity:1;
+}
+
+.dashboard-sidebar-drawer .dashboard-brand-note strong {
+  color:#fffaf6 !important;
+  font-size:14px !important;
+  font-weight:760 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-brand-note small {
+  color:#bca69b !important;
+  font-size:11px !important;
+  line-height:1.45 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-signout {
+  color:#dccbc2 !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-signout:hover {
+  color:#fff !important;
+  background:rgba(255,255,255,.075) !important;
+}
+
+/* Main dashboard */
+.ops-brand-status small {
+  color:#d0b7aa !important;
+  font-size:9px !important;
+  font-weight:850 !important;
+}
+
+.ops-brand-status strong {
+  color:#fffaf6 !important;
+  font-size:18px !important;
+  font-weight:760 !important;
+}
+
+.ops-updated {
+  color:#bea89d !important;
+  font-size:10px !important;
+}
+
+.ops-metrics article {
+  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045)) !important;
+  border-color:rgba(255,255,255,.115) !important;
+}
+
+.ops-metrics span {
+  color:#d3bdb2 !important;
+  font-size:10px !important;
+  font-weight:750 !important;
+}
+
+.ops-metrics strong {
+  color:#fffaf6 !important;
+  font-size:24px !important;
+  font-weight:760 !important;
+}
+
+.ops-metrics small {
+  color:#baa49a !important;
+  font-size:9px !important;
+}
+
+.ops-floor-header {
+  color:#8a5f4d !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+}
+
+.ops-table-caption>span {
+  color:#4e392f !important;
+  font-size:10px !important;
+  font-weight:850 !important;
+  line-height:1.2 !important;
+  background:rgba(255,250,244,.98) !important;
+  border-color:rgba(99,66,51,.15) !important;
+}
+
+.ops-info {
+  color:#664d41 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  background:rgba(255,250,244,.98) !important;
+}
+
+.ops-popover>small {
+  font-size:9px !important;
+  font-weight:900 !important;
+}
+
+.ops-popover>strong {
+  color:#3d2d26 !important;
+  font-size:14px !important;
+  font-weight:800 !important;
+}
+
+.ops-popover>p {
+  color:#674f45 !important;
+  font-size:11px !important;
+  line-height:1.55 !important;
+}
+
+.ops-popover>div {
+  color:#795f54 !important;
+  font-size:10px !important;
+}
+
+.ops-kitchen-label {
+  color:#fff3e8 !important;
+  font-size:10px !important;
+  text-shadow:0 1px 2px rgba(61,36,26,.18);
+}
+
+.ops-dock a {
+  color:#d1beb4 !important;
+  font-size:11px !important;
+  font-weight:760 !important;
+}
+
+.ops-dock b {
+  color:#f1ded4 !important;
+  font-size:9px !important;
+}
+
+.ops-dock .ops-client-link {
+  color:#fff !important;
+}
+
+.ops-more-tables {
+  color:#c3ada2 !important;
+  font-size:10px !important;
+}
+
+/* Internal pages */
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row h1,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-title h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card h2,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card h2 {
+  color:#fffaf6 !important;
+  font-weight:650 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row .muted,
+.dashboard-shell:not(.dashboard-shell-cinematic) .page-heading-row p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-title p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card p,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card p {
+  color:#c7b2a8 !important;
+  font-size:14px !important;
+  line-height:1.65 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .eyebrow,
+.dashboard-shell:not(.dashboard-shell-cinematic) .section-kicker {
+  color:#e0a68e !important;
+  font-size:11px !important;
+  font-weight:850 !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .muted,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-person span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-column-heading,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card-meta,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-item-options,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-item-note,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-operation-summary span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-card small,
+.dashboard-shell:not(.dashboard-shell-cinematic) .top-product-row span,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-free-copy {
+  color:#bda89e !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) .panel-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .settings-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .reports-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-plan-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .subscription-status-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-column,
+.dashboard-shell:not(.dashboard-shell-cinematic) .order-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .table-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .team-row,
+.dashboard-shell:not(.dashboard-shell-cinematic) .service-queue-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .large-empty-state,
+.dashboard-shell:not(.dashboard-shell-cinematic) .cancelled-orders,
+.dashboard-shell:not(.dashboard-shell-cinematic) .product-card,
+.dashboard-shell:not(.dashboard-shell-cinematic) .category-card {
+  background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.035)) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) input,
+.dashboard-shell:not(.dashboard-shell-cinematic) select,
+.dashboard-shell:not(.dashboard-shell-cinematic) textarea {
+  color:#fff8f3 !important;
+  background:rgba(255,255,255,.07) !important;
+}
+
+.dashboard-shell:not(.dashboard-shell-cinematic) input::placeholder,
+.dashboard-shell:not(.dashboard-shell-cinematic) textarea::placeholder {
+  color:#a58d82 !important;
+}
+
+@media(max-width:760px) {
+  .dashboard-sidebar-drawer .dashboard-nav a {
+    font-size:14px !important;
+  }
+
+  .ops-brand-status strong {
+    font-size:15px !important;
+  }
+
+  .ops-metrics strong {
+    font-size:18px !important;
+  }
+
+  .ops-table-caption>span {
+    font-size:9px !important;
+  }
+}
