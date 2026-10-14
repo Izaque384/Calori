@@ -6,7 +6,7 @@ import {
   verifyCheckoutReference,
   verifyStripeSignature,
 } from "@/lib/stripe-billing";
-import { and, eq, lt, or } from "drizzle-orm";
+import { and, eq, lt, ne, or } from "drizzle-orm";
 
 type StripeLikeObject = Record<string, unknown>;
 
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
             subscriptionCanceledAt: null,
             updatedAt: new Date(),
           })
-          .where(eq(restaurants.id, restaurantId));
+          .where(and(eq(restaurants.id, restaurantId), ne(restaurants.subscriptionStatus, "legacy")));
       }
     }
 
@@ -158,9 +158,12 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           })
           .where(
-            or(
-              subscriptionId ? eq(restaurants.stripeSubscriptionId, subscriptionId) : undefined,
-              customerId ? eq(restaurants.stripeCustomerId, customerId) : undefined,
+            and(
+              ne(restaurants.subscriptionStatus, "legacy"),
+              or(
+                subscriptionId ? eq(restaurants.stripeSubscriptionId, subscriptionId) : undefined,
+                customerId ? eq(restaurants.stripeCustomerId, customerId) : undefined,
+              ),
             ),
           );
       }
@@ -194,9 +197,12 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           })
           .where(
-            or(
-              subscriptionId ? eq(restaurants.stripeSubscriptionId, subscriptionId) : undefined,
-              customerId ? eq(restaurants.stripeCustomerId, customerId) : undefined,
+            and(
+              ne(restaurants.subscriptionStatus, "legacy"),
+              or(
+                subscriptionId ? eq(restaurants.stripeSubscriptionId, subscriptionId) : undefined,
+                customerId ? eq(restaurants.stripeCustomerId, customerId) : undefined,
+              ),
             ),
           );
       }
