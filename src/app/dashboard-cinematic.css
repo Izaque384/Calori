@@ -4895,7 +4895,7 @@
 }
 
 .dashboard-sidebar-drawer .dashboard-product-label {
-  color:#e2b9a8 !important;
+  color:#f0c7b5 !important;
   font-size:11px !important;
   font-weight:850 !important;
   letter-spacing:.14em !important;
@@ -4909,7 +4909,7 @@
 }
 
 .dashboard-sidebar-drawer .restaurant-pill small {
-  color:#c8ada1 !important;
+  color:#e6d2c9 !important;
   font-size:10px !important;
   font-weight:800 !important;
   letter-spacing:.08em;
@@ -4925,7 +4925,7 @@
 }
 
 .dashboard-sidebar-drawer .dashboard-nav-label {
-  color:#d5ad9a !important;
+  color:#efc3b1 !important;
   font-size:11px !important;
   font-weight:850 !important;
   letter-spacing:.13em !important;
@@ -4933,14 +4933,14 @@
 }
 
 .dashboard-sidebar-drawer .dashboard-nav a {
-  color:#d9cbc4 !important;
+  color:#f3ece7 !important;
   font-size:15px !important;
   font-weight:650 !important;
   line-height:1.25 !important;
 }
 
 .dashboard-sidebar-drawer .dashboard-nav a svg {
-  opacity:.92;
+  opacity:1;
 }
 
 .dashboard-sidebar-drawer .dashboard-nav a:hover {
@@ -4966,13 +4966,13 @@
 }
 
 .dashboard-sidebar-drawer .dashboard-brand-note small {
-  color:#bca69b !important;
+  color:#ddcbc2 !important;
   font-size:11px !important;
   line-height:1.45 !important;
 }
 
 .dashboard-sidebar-drawer .dashboard-signout {
-  color:#dccbc2 !important;
+  color:#f1e7e1 !important;
   font-size:12px !important;
   font-weight:700 !important;
 }
