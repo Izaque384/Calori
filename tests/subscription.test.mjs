@@ -40,3 +40,14 @@ test("active subscription grants access independently of trial", () => {
   assert.equal(summary.isActive, true);
   assert.equal(summary.hasAccess, true);
 });
+
+
+test("legacy access bypasses subscription and trial requirements", () => {
+  const summary = getSubscriptionSummary({
+    status: "legacy",
+    trialEndsAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+  });
+
+  assert.equal(summary.isLegacy, true);
+  assert.equal(summary.hasAccess, true);
+});

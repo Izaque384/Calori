@@ -1,7 +1,7 @@
 export const CALORI_MONTHLY_PRICE_CENTS = 5900;
 export const CALORI_TRIAL_DAYS = 14;
 
-export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled";
+export type SubscriptionStatus = "trialing" | "active" | "legacy" | "past_due" | "canceled";
 
 export function getSubscriptionSummary(params: {
   status: string;
@@ -17,13 +17,15 @@ export function getSubscriptionSummary(params: {
 
   const isTrialActive = params.status === "trialing" && trialDaysRemaining > 0;
   const isActive = params.status === "active";
+  const isLegacy = params.status === "legacy";
 
   return {
     status: params.status as SubscriptionStatus,
     trialDaysRemaining,
     isTrialActive,
     isActive,
-    hasAccess: isTrialActive || isActive,
+    isLegacy,
+    hasAccess: isTrialActive || isActive || isLegacy,
   };
 }
 
