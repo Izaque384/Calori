@@ -5181,3 +5181,53 @@
     font-size:9px !important;
   }
 }
+
+
+/* CALORI — SIDEBAR FINAL CONTRAST
+   Link labels are nested spans with their own legacy color in globals.css.
+   Override the label itself instead of relying on inherited link color. */
+.dashboard-sidebar-drawer .dashboard-nav a > span {
+  color:#fff7f2 !important;
+  opacity:1 !important;
+  font-weight:720 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a > svg {
+  color:#f5ebe5 !important;
+  opacity:1 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a.active > span {
+  color:#ffffff !important;
+  font-weight:780 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a.active > svg {
+  color:#f07a57 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav a:hover > span {
+  color:#ffffff !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-nav-label,
+.dashboard-sidebar-drawer .dashboard-product-label {
+  color:#f2c8b5 !important;
+}
+
+.dashboard-sidebar-drawer .restaurant-pill small {
+  color:#ead8cf !important;
+}
+
+.dashboard-sidebar-drawer .restaurant-pill strong,
+.dashboard-sidebar-drawer .dashboard-brand-note strong {
+  color:#ffffff !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-brand-note small {
+  color:#e2d0c7 !important;
+}
+
+.dashboard-sidebar-drawer .dashboard-signout {
+  color:#fff5ef !important;
+}
