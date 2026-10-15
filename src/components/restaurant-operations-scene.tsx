@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { FloorTableItem } from "@/components/table-floor-map";
+import type { FloorTableItem } from "@/lib/restaurant-floor";
 
 export type SceneStaffItem = {
   id: string;
