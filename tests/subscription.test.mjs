@@ -5,8 +5,8 @@ import {
   getSubscriptionSummary,
 } from "../src/lib/subscription.ts";
 
-test("Calori monthly plan remains R$59", () => {
-  assert.equal(CALORI_MONTHLY_PRICE_CENTS, 5900);
+test("Calori monthly plan is R$69", () => {
+  assert.equal(CALORI_MONTHLY_PRICE_CENTS, 6900);
 });
 
 test("trial grants access while it is still active", () => {
