@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { type FloorTableItem } from "@/components/table-floor-map";
+import type { FloorTableItem } from "@/lib/restaurant-floor";
 import RestaurantOperationsScene, { type SceneStaffItem } from "@/components/restaurant-operations-scene";
 import { orders, products, restaurantMembers, restaurants, serviceRequests, tables, tableVisits } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
