@@ -31,7 +31,7 @@ export default function Home() {
           <p>Seu cliente vê o cardápio, faz o pedido, acompanha o preparo, chama atendimento e pede a conta. Sua equipe recebe tudo organizado por mesa.</p>
           <div className="landing-hero-actions">
             <Link className="landing-primary-cta" href="/auth/sign-up">Começar 14 dias grátis <span aria-hidden="true">→</span></Link>
-            <span>Sem cartão · depois R$ 59/mês</span>
+            <span>Sem cartão · depois R$ 69/mês</span>
           </div>
         </div>
         <div className="landing-feature-strip">
@@ -83,7 +83,7 @@ export default function Home() {
       </section>
 
       <section className="landing-pricing" id="preco">
-        <div><span className="section-kicker">Plano único</span><h2>R$ 59<small>/mês</small></h2><p>Cardápio, pedidos, mesas, atendimento, equipe e relatórios. Um restaurante.</p></div>
+        <div><span className="section-kicker">Plano único</span><h2>R$ 69<small>/mês</small></h2><p>Cardápio, pedidos, mesas, atendimento, equipe e relatórios. Um restaurante.</p></div>
         <div className="landing-pricing-side"><strong>14 dias grátis</strong><span>Sem cartão no início.</span><Link className="landing-primary-cta" href="/auth/sign-up">Começar agora <span aria-hidden="true">→</span></Link></div>
       </section>
 
