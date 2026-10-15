@@ -1,4 +1,4 @@
-export const CALORI_MONTHLY_PRICE_CENTS = 5900;
+export const CALORI_MONTHLY_PRICE_CENTS = 6900;
 export const CALORI_TRIAL_DAYS = 14;
 
 export type SubscriptionStatus = "trialing" | "active" | "legacy" | "past_due" | "canceled";
