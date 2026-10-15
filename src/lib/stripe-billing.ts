@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const CALORI_STRIPE_PRICE_ID = "price_1UOGO6ADIPgNEfyPUBvksSl9";
-export const CALORI_STRIPE_PAYMENT_LINK = "https://buy.stripe.com/bJedR8epV3FUcQrcJd3VC00";
+export const CALORI_STRIPE_PRICE_ID = "price_1UQtgaADIPgNEfyPRQhvdDsi";
+export const CALORI_STRIPE_PAYMENT_LINK = "https://buy.stripe.com/4gM6oG3Lh6S617JdNh3VC01";
 export const CALORI_STRIPE_PORTAL_LOGIN = "https://billing.stripe.com/p/login/bJedR8epV3FUcQrcJd3VC00";
 
 export function createCheckoutReference(params: {

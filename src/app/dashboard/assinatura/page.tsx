@@ -130,7 +130,7 @@ export default async function SubscriptionPage() {
               <h2>
                 {row.subscriptionStatus === "past_due"
                   ? "Sua assinatura precisa de atenção."
-                  : "Continue usando o Calori por R$ 59/mês."}
+                  : "Continue usando o Calori por R$ 69/mês."}
               </h2>
               {canManageBilling ? (
                 <>
