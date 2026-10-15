@@ -2,11 +2,10 @@ import { db } from "@/db";
 import DashboardSidebar from "@/components/dashboard-sidebar";
 import type { FloorTableItem } from "@/lib/restaurant-floor";
 import RestaurantOperationsScene, { type SceneStaffItem } from "@/components/restaurant-operations-scene";
-import { orders, products, restaurantMembers, restaurants, serviceRequests, tables, tableVisits } from "@/db/schema";
-import { auth } from "@/lib/auth/server";
+import { orders, products, restaurantMembers, serviceRequests, tables, tableVisits } from "@/db/schema";
 import { and, asc, eq, gt, gte, inArray, isNull, ne, sql } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { getSubscriptionSummary } from "@/lib/subscription";
+import { requireCurrentRestaurant } from "@/lib/current-restaurant";
+import { canViewReports } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,24 +18,7 @@ function priorityStatus(statuses: string[]) {
 }
 
 export default async function DashboardPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
-  const [membership] = await db.select({ restaurantId: restaurantMembers.restaurantId, role: restaurantMembers.role })
-    .from(restaurantMembers).where(eq(restaurantMembers.userId, session.user.id)).limit(1);
-  if (!membership) redirect("/onboarding");
-
-  const [restaurant] = await db.select({
-    id: restaurants.id,
-    name: restaurants.name,
-    slug: restaurants.slug,
-    subscriptionStatus: restaurants.subscriptionStatus,
-    trialEndsAt: restaurants.trialEndsAt,
-  }).from(restaurants).where(and(eq(restaurants.id, membership.restaurantId), eq(restaurants.active, true))).limit(1);
-  if (!restaurant) redirect("/onboarding");
-
-  const subscription = getSubscriptionSummary({ status: restaurant.subscriptionStatus, trialEndsAt: restaurant.trialEndsAt });
-  if (!subscription.hasAccess) redirect("/dashboard/assinatura?locked=1");
+  const { restaurant, role } = await requireCurrentRestaurant();
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -125,7 +107,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="dashboard-shell dashboard-shell-cinematic">
-      <DashboardSidebar restaurantName={restaurant.name} role={membership.role} activePath="/dashboard" />
+      <DashboardSidebar restaurantName={restaurant.name} role={role} activePath="/dashboard" />
 
       <section className="dashboard-content dashboard-isometric-content dashboard-cinematic-content">
         <RestaurantOperationsScene
@@ -133,7 +115,7 @@ export default async function DashboardPage() {
           staff={sceneStaff}
           restaurantName={restaurant.name}
           restaurantSlug={restaurant.slug}
-          canViewReports={membership.role !== "staff"}
+          canViewReports={canViewReports(role)}
           metrics={{
             activeTables,
             activeOrders: inProgress,
@@ -144,7 +126,7 @@ export default async function DashboardPage() {
           }}
         />
 
-        {membership.role === "owner" && restaurant.subscriptionStatus === "trialing" && (
+        {role === "owner" && restaurant.subscriptionStatus === "trialing" && (
           <a href="/dashboard/assinatura" className="cinematic-trial-chip glass-panel">
             <span>Período gratuito</span>
             <strong>
@@ -155,7 +137,7 @@ export default async function DashboardPage() {
           </a>
         )}
 
-        {membership.role !== "staff" && !activationComplete && (
+        {role !== "staff" && !activationComplete && (
           <aside className="cinematic-setup-card glass-panel">
             <div>
               <span>Configuração inicial</span>
