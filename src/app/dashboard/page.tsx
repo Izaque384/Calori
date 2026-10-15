@@ -18,7 +18,7 @@ function priorityStatus(statuses: string[]) {
 }
 
 export default async function DashboardPage() {
-  const { restaurant, role } = await requireCurrentRestaurant();
+  const { restaurant, role, subscription } = await requireCurrentRestaurant();
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
