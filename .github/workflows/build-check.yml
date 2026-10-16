@@ -27,6 +27,18 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Export generated lockfile
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const zlib = require("node:zlib");
+          const encoded = zlib.gzipSync(fs.readFileSync("package-lock.json")).toString("base64");
+          console.log("CALORI_LOCK_BEGIN");
+          for (let i = 0; i < encoded.length; i += 4000) {
+            console.log("CALORI_LOCK_CHUNK:" + encoded.slice(i, i + 4000));
+          }
+          console.log("CALORI_LOCK_END");
+          NODE
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
