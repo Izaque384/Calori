@@ -62,6 +62,40 @@ function formatMoney(value: number) {
   }).format(value);
 }
 
+function MenuProductCard({
+  product,
+  featured = false,
+  onOpen,
+}: {
+  product: ProductItem;
+  featured?: boolean;
+  onOpen: (product: ProductItem) => void;
+}) {
+  return (
+    <button
+      className={`public-product-card product-button${featured ? " featured-product-card" : ""}`}
+      type="button"
+      onClick={() => onOpen(product)}
+      aria-label={`Ver ${product.name} e adicionar ao pedido`}
+    >
+      {product.imageUrl ? (
+        <img className="public-product-image" src={product.imageUrl} alt={product.name} />
+      ) : (
+        <span className="public-product-image-placeholder" aria-hidden="true">
+          <span />
+        </span>
+      )}
+      <div>
+        {featured && <span className="featured-badge">Destaque</span>}
+        <h2>{product.name}</h2>
+        {product.description && <p>{product.description}</p>}
+      </div>
+      <strong>{formatMoney(product.price)}</strong>
+      <span className="public-product-card-action" aria-hidden="true">+</span>
+    </button>
+  );
+}
+
 export default function PublicMenuClient({
   restaurantSlug,
   tableCode,
@@ -78,7 +112,7 @@ export default function PublicMenuClient({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState<{ id: string; number: number; total: number; table: string } | null>(null);
-  const [trackingOpen, setTrackingOpen] = useState(true);
+  const [trackingOpen, setTrackingOpen] = useState(false);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceSending, setServiceSending] = useState(false);
   const [serviceMessage, setServiceMessage] = useState("");
@@ -88,6 +122,8 @@ export default function PublicMenuClient({
   const [billLoading, setBillLoading] = useState(false);
   const [billError, setBillError] = useState("");
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("");
+  const [cartNotice, setCartNotice] = useState("");
   const [bill, setBill] = useState<{
     table: string;
     orderCount: number;
@@ -130,9 +166,24 @@ export default function PublicMenuClient({
     });
   }, [products, search]);
 
-  const featuredProducts = visibleProducts.filter((product) => product.featured);
+  const featuredProducts = search
+    ? []
+    : visibleProducts.filter((product) => product.featured);
+
+  const categorySectionIds = useMemo(() => {
+    const ids: string[] = [];
+    if (products.some((product) => product.featured)) ids.push("categoria-destaques");
+    for (const category of categories) {
+      if (products.some((product) => product.categoryId === category.id)) {
+        ids.push(`categoria-${category.id}`);
+      }
+    }
+    if (products.some((product) => !product.categoryId)) ids.push("categoria-outros");
+    return ids;
+  }, [categories, products]);
 
   function scrollToCategory(id: string) {
+    setActiveCategory(id);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -140,6 +191,61 @@ export default function PublicMenuClient({
   const cartStorageKey = `calori-cart:${restaurantSlug}:${tableCode}`;
   const activeOrderStorageKey = `calori-active-order:${restaurantSlug}:${tableCode}`;
   const pendingOrderRequestKey = `calori-pending-order-request:${restaurantSlug}:${tableCode}`;
+
+  useEffect(() => {
+    if (search) {
+      setActiveCategory("");
+      return;
+    }
+
+    const sections = categorySectionIds
+      .map((id) => document.getElementById(id))
+      .filter((element): element is HTMLElement => Boolean(element));
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+        if (visible[0]) setActiveCategory(visible[0].target.id);
+      },
+      { rootMargin: "-150px 0px -62% 0px", threshold: [0, 0.08, 0.2] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [categorySectionIds, search]);
+
+  useEffect(() => {
+    const modalOpen = Boolean(activeProduct || cartOpen || serviceOpen || billOpen);
+    if (!modalOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (billOpen) setBillOpen(false);
+      else if (serviceOpen) setServiceOpen(false);
+      else if (cartOpen) setCartOpen(false);
+      else setActiveProduct(null);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activeProduct, billOpen, cartOpen, serviceOpen]);
+
+  useEffect(() => {
+    if (!cartNotice) return;
+    const timer = window.setTimeout(() => setCartNotice(""), 2200);
+    return () => window.clearTimeout(timer);
+  }, [cartNotice]);
 
   async function createTableSession() {
     const response = await fetch("/api/public/session", {
@@ -302,7 +408,7 @@ export default function PublicMenuClient({
 
     setCart((current) => [...current, item]);
     setActiveProduct(null);
-    setCartOpen(true);
+    setCartNotice(`${activeProduct.name} foi adicionado ao pedido.`);
   }
 
   function changeQuantity(key: string, delta: number) {
@@ -320,6 +426,7 @@ export default function PublicMenuClient({
   async function openBill() {
     if (billLoading) return;
 
+    setServiceOpen(false);
     setBillLoading(true);
     setBillError("");
 
@@ -393,6 +500,7 @@ export default function PublicMenuClient({
       setServiceMessage(
         response.ok ? data.message : data.error || "Não conseguimos enviar a solicitação.",
       );
+      if (response.ok) setServiceNote("");
     } catch {
       setServiceMessage("Não conseguimos enviar a solicitação. Tente novamente.");
     } finally {
@@ -500,7 +608,7 @@ export default function PublicMenuClient({
         </div>
       )}
 
-      <section className="public-menu-sections">
+      <section className="public-menu-sections" id="menu-catalog-start">
         <div className="public-menu-tools">
           <label className="public-search">
             <span aria-hidden="true">⌕</span>
@@ -519,7 +627,12 @@ export default function PublicMenuClient({
           {!search && (
             <div className="public-category-chips" aria-label="Categorias">
               {featuredProducts.length > 0 && (
-                <button type="button" onClick={() => scrollToCategory("categoria-destaques")}>
+                <button
+                  className={activeCategory === "categoria-destaques" ? "active" : ""}
+                  type="button"
+                  aria-current={activeCategory === "categoria-destaques" ? "true" : undefined}
+                  onClick={() => scrollToCategory("categoria-destaques")}
+                >
                   Destaques
                 </button>
               )}
@@ -528,8 +641,10 @@ export default function PublicMenuClient({
                 if (!count) return null;
                 return (
                   <button
+                    className={activeCategory === `categoria-${category.id}` ? "active" : ""}
                     type="button"
                     key={category.id}
+                    aria-current={activeCategory === `categoria-${category.id}` ? "true" : undefined}
                     onClick={() => scrollToCategory(`categoria-${category.id}`)}
                   >
                     {category.name}
@@ -537,7 +652,12 @@ export default function PublicMenuClient({
                 );
               })}
               {products.some((product) => !product.categoryId) && (
-                <button type="button" onClick={() => scrollToCategory("categoria-outros")}>
+                <button
+                  className={activeCategory === "categoria-outros" ? "active" : ""}
+                  type="button"
+                  aria-current={activeCategory === "categoria-outros" ? "true" : undefined}
+                  onClick={() => scrollToCategory("categoria-outros")}
+                >
                   Outros
                 </button>
               )}
@@ -571,22 +691,12 @@ export default function PublicMenuClient({
             </div>
             <div className="public-featured-grid">
               {featuredProducts.map((product) => (
-                <button
-                  className="public-product-card product-button featured-product-card"
-                  type="button"
+                <MenuProductCard
+                  featured
                   key={`featured-${product.id}`}
-                  onClick={() => openProduct(product)}
-                >
-                  {product.imageUrl && (
-                    <img className="public-product-image" src={product.imageUrl} alt={product.name} />
-                  )}
-                  <div>
-                    <span className="featured-badge">Destaque</span>
-                    <h2>{product.name}</h2>
-                    {product.description && <p>{product.description}</p>}
-                  </div>
-                  <strong>{formatMoney(product.price)}</strong>
-                </button>
+                  product={product}
+                  onOpen={openProduct}
+                />
               ))}
             </div>
           </section>
@@ -604,16 +714,7 @@ export default function PublicMenuClient({
               </div>
               <div className="public-product-list">
                 {items.map((product) => (
-                  <button className="public-product-card product-button" type="button" key={product.id} onClick={() => openProduct(product)}>
-                    {product.imageUrl && (
-                      <img className="public-product-image" src={product.imageUrl} alt={product.name} />
-                    )}
-                    <div>
-                      <h2>{product.name}</h2>
-                      {product.description && <p>{product.description}</p>}
-                    </div>
-                    <strong>{formatMoney(product.price)}</strong>
-                  </button>
+                  <MenuProductCard key={product.id} product={product} onOpen={openProduct} />
                 ))}
               </div>
             </section>
@@ -627,16 +728,7 @@ export default function PublicMenuClient({
             </div>
             <div className="public-product-list">
               {visibleProducts.filter((product) => !product.categoryId).map((product) => (
-                <button className="public-product-card product-button" type="button" key={product.id} onClick={() => openProduct(product)}>
-                  {product.imageUrl && (
-                    <img className="public-product-image" src={product.imageUrl} alt={product.name} />
-                  )}
-                  <div>
-                    <h2>{product.name}</h2>
-                    {product.description && <p>{product.description}</p>}
-                  </div>
-                  <strong>{formatMoney(product.price)}</strong>
-                </button>
+                <MenuProductCard key={product.id} product={product} onOpen={openProduct} />
               ))}
             </div>
           </section>
@@ -645,10 +737,19 @@ export default function PublicMenuClient({
 
       {activeProduct && (
         <div className="menu-modal-backdrop" onClick={() => setActiveProduct(null)}>
-          <section className="menu-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setActiveProduct(null)}>×</button>
+          <section
+            className="menu-modal product-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-dialog-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setActiveProduct(null)}>×</button>
+            {activeProduct.imageUrl && (
+              <img className="menu-modal-product-image" src={activeProduct.imageUrl} alt={activeProduct.name} />
+            )}
             <span className="section-kicker">Adicionar ao pedido</span>
-            <h2>{activeProduct.name}</h2>
+            <h2 id="product-dialog-title">{activeProduct.name}</h2>
             {activeProduct.description && <p className="muted">{activeProduct.description}</p>}
             <strong className="modal-base-price">{formatMoney(activeProduct.price)}</strong>
 
@@ -700,10 +801,16 @@ export default function PublicMenuClient({
 
       {cartOpen && (
         <div className="menu-modal-backdrop cart-backdrop" onClick={() => setCartOpen(false)}>
-          <section className="menu-modal cart-panel" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setCartOpen(false)}>×</button>
+          <section
+            className="menu-modal cart-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-dialog-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setCartOpen(false)}>×</button>
             <span className="section-kicker">Seu pedido</span>
-            <h2>Revise antes de enviar.</h2>
+            <h2 id="cart-dialog-title">Revise antes de enviar.</h2>
 
             <div className="cart-items">
               {cart.map((item) => (
@@ -739,10 +846,16 @@ export default function PublicMenuClient({
 
       {serviceOpen && (
         <div className="menu-modal-backdrop" onClick={() => setServiceOpen(false)}>
-          <section className="menu-modal service-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setServiceOpen(false)}>×</button>
+          <section
+            className="menu-modal service-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="service-dialog-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setServiceOpen(false)}>×</button>
             <span className="section-kicker">Atendimento</span>
-            <h2>Como podemos ajudar?</h2>
+            <h2 id="service-dialog-title">Como podemos ajudar?</h2>
             <p className="muted">Diga o que você precisa e a equipe recebe junto com a identificação da mesa.</p>
 
             <label className="service-note-field">
@@ -778,10 +891,16 @@ export default function PublicMenuClient({
 
       {billOpen && (
         <div className="menu-modal-backdrop" onClick={() => setBillOpen(false)}>
-          <section className="menu-modal bill-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setBillOpen(false)}>×</button>
+          <section
+            className="menu-modal bill-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bill-dialog-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setBillOpen(false)}>×</button>
             <span className="section-kicker">Conta da mesa</span>
-            <h2>{bill?.table || "Sua mesa"}</h2>
+            <h2 id="bill-dialog-title">{bill?.table || "Sua mesa"}</h2>
 
             {billError ? (
               <p className="form-error">{billError}</p>
@@ -834,6 +953,13 @@ export default function PublicMenuClient({
               <p className="muted">Carregando conta...</p>
             )}
           </section>
+        </div>
+      )}
+
+      {cartNotice && (
+        <div className="public-cart-toast" role="status" aria-live="polite">
+          <span aria-hidden="true">✓</span>
+          {cartNotice}
         </div>
       )}
 
