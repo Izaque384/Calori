@@ -136,13 +136,21 @@ export default async function PublicMenuPage({ params }: Props) {
           <div>
             <strong>{restaurant.name}</strong>
             {(restaurant.address || restaurant.phone) && (
-              <p>
-                {[restaurant.address, restaurant.phone].filter(Boolean).join(" · ")}
-              </p>
+              <div className="public-restaurant-meta">
+                {restaurant.address && <span>{restaurant.address}</span>}
+                {restaurant.phone && (
+                  <a href={`tel:${restaurant.phone.replace(/[^+\d]/g, "")}`}>
+                    {restaurant.phone}
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>
-        <div className="public-table-pill">{table.name}</div>
+        <div className="public-table-pill">
+          <span>Sua mesa</span>
+          <strong>{table.name}</strong>
+        </div>
       </header>
 
       <section className={`public-menu-hero ${restaurant.bannerUrl ? "has-banner" : ""}`}>
