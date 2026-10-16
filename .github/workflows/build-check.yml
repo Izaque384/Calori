@@ -26,18 +26,7 @@ jobs:
         with:
           node-version: 24
       - name: Install dependencies
-        run: npm install
-      - name: Export generated lockfile
-        run: |
-          node - <<'NODE'
-          const fs = require("node:fs");
-          const lock = JSON.stringify(JSON.parse(fs.readFileSync("package-lock.json", "utf8")));
-          console.log("CALORI_LOCK_JSON_BEGIN");
-          for (let i = 0; i < lock.length; i += 3000) {
-            console.log("CALORI_LOCK_JSON_CHUNK:" + lock.slice(i, i + 3000));
-          }
-          console.log("CALORI_LOCK_JSON_END");
-          NODE
+        run: npm ci
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
