@@ -1,21 +1,13 @@
 import Link from "next/link";
 import CaloriBrand from "@/components/calori-brand";
 
-const journey = [
-  { number: "01", title: "Escaneia", text: "O cliente abre a mesa pelo QR Code, sem app e sem cadastro." },
-  { number: "02", title: "Escolhe", text: "Vê o cardápio, personaliza itens e monta o pedido no próprio celular." },
-  { number: "03", title: "Pede", text: "O pedido entra direto na operação e a equipe acompanha o andamento." },
-  { number: "04", title: "Acompanha", text: "O cliente sabe se foi recebido, está em preparo ou já está pronto." },
-  { number: "05", title: "Chama e fecha", text: "Atendimento, observações e conta ficam ligados à mesa certa." },
-];
-
 export default function Home() {
   return (
     <main className="landing-shell">
       <header className="landing-header">
         <Link href="/" aria-label="Calori — início"><CaloriBrand compact /></Link>
         <nav className="landing-nav" aria-label="Navegação principal">
-          <a href="#fluxo">Como funciona</a><a href="#operacao">Operação</a><a href="#preco">Preço</a>
+          <a href="#operacao">Operação</a><a href="#preco">Preço</a>
         </nav>
         <div className="landing-header-actions">
           <Link className="landing-login" href="/auth/sign-in">Entrar</Link>
@@ -39,17 +31,6 @@ export default function Home() {
           <article><span className="landing-feature-number">02</span><div><small>Equipe</small><strong>Pedidos em tempo real</strong></div></article>
           <article><span className="landing-feature-number">03</span><div><small>Salão</small><strong>Chamados por mesa</strong></div></article>
           <article><span className="landing-feature-number">04</span><div><small>Gestão</small><strong>Operação em um olhar</strong></div></article>
-        </div>
-      </section>
-
-      <section className="landing-flow" id="fluxo">
-        <div className="landing-flow-heading">
-          <span className="section-kicker">Uma jornada, não vários sistemas</span>
-          <h2>Do primeiro toque à conta.</h2>
-          <p>O Calori acompanha a experiência inteira da mesa e mantém o restaurante no controle.</p>
-        </div>
-        <div className="landing-flow-grid">
-          {journey.map((step) => <article key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.text}</p></article>)}
         </div>
       </section>
 
