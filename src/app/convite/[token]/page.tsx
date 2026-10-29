@@ -22,7 +22,6 @@ export default async function InvitePage({ params, searchParams }: Props) {
       id: teamInvites.id,
       email: teamInvites.email,
       role: teamInvites.role,
-      workArea: teamInvites.workArea,
       restaurantName: restaurants.name,
     })
     .from(teamInvites)
@@ -52,13 +51,6 @@ export default async function InvitePage({ params, searchParams }: Props) {
 
   const { data: session } = await auth.getSession();
   const roleLabel = invite.role === "manager" ? "manager" : "staff";
-  const workAreaLabel =
-    invite.workArea === "waiter"
-      ? "salão / garçom"
-      : invite.workArea === "kitchen"
-        ? "cozinha / cozinheiro"
-        : null;
-
   return (
     <main className="auth-shell">
       <section className="auth-card invite-accept-card">
@@ -66,8 +58,7 @@ export default async function InvitePage({ params, searchParams }: Props) {
         <p className="eyebrow">Convite para equipe</p>
         <h1>Você foi convidado para {invite.restaurantName}.</h1>
         <p className="muted">
-          O acesso será criado como <strong>{roleLabel}</strong> para o e-mail <strong>{invite.email}</strong>
-          {workAreaLabel ? <> e aparecerá no setor <strong>{workAreaLabel}</strong> do painel.</> : "."}
+          O acesso será criado como <strong>{roleLabel}</strong> para o e-mail <strong>{invite.email}</strong>.
         </p>
 
         {query.erro === "email" && (
